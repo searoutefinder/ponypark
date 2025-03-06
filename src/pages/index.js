@@ -120,13 +120,13 @@ export default function Home() {
       },
       (error) => {
         switch (error.code) {
-          case error.PERMISSION_DENIED:
+          case 'PERMISSION_DENIED':
             setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
             break;
-          case error.POSITION_UNAVAILABLE:
+          case 'POSITION_UNAVAILABLE':
             setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
             break;
-          case error.TIMEOUT:
+          case 'TIMEOUT':
             setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
             break;
           default:
