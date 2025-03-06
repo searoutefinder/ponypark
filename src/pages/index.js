@@ -12,7 +12,6 @@ export default function Home() {
   const router = useRouter();
   const { destination } = router.query;
 
-  const [error, setError] = useState(null);
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [selectedPoi, setSelectedPoi] = useState(null);
 
@@ -91,7 +90,9 @@ export default function Home() {
   // Geolocation
   useEffect(() => {
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser.");
+      setModalData({type: 'Warning', text: `Geolocation is not supported by your browser.`, btnText: 'OK'})
+      setIsModalShown(true)
+      setLoading(false)
       return;
     }
     
@@ -117,7 +118,10 @@ export default function Home() {
         setLoading(false)         
         console.log("Position WATCH")
       },
-      (err) => setError(err.message),
+      (err) => {
+        setModalData({type: 'Warning', text: err.message, btnText: 'OK'})
+        setLoading(false)
+      },
       {
         enableHighAccuracy: true,
         maximumAge: 10000
