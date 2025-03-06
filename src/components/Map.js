@@ -13,19 +13,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoidGFtaCIsImEiOiJja3B5M2ViM3gwNnE4MnFudXF0ZThwM
 const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, onPoiSelected, setLoading, filters, userLocation}) => {
     
     const map = useRef(null);
-    const userLocationRef = useRef(userLocation);
 
-    const generateFeatureCollection = (coordinates) => {
-      return {"type": "FeatureCollection", "features": [
-        {
-          "type": "Feature",
-          "properties": {},
-          "geometry": {
-            "type": "Point",
-            "coordinates": [coordinates[0], coordinates[1]]
-          }
-        }
-      ]}
+    const generateFeatureCollection = (feature) => {
+      return {"type": "FeatureCollection", "features": [feature]}
     }
 
     const displayRoute = async (origin, destination) => {
@@ -347,10 +337,10 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
     
     // userLocation prop changed
     useEffect(() => {
+      console.log(userLocation)
       if(typeof map.current.getSource('userlocation-src') !== 'undefined') {
-        map.current.getSource('userlocation-src').setData(generateFeatureCollection(location))
+        map.current.getSource('userlocation-src').setData(generateFeatureCollection(userLocation))
       }
-      userLocationRef.current = userLocation;
     }, [userLocation])
 
     return (
