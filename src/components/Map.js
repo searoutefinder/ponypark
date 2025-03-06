@@ -159,7 +159,8 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
   
       map.current = new mapboxgl.Map({
         container: 'map',
-        style: {
+        
+        /*style: {
           version: 8,
           sources: {},
           layers: [
@@ -171,7 +172,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
               }
             }
           ]
-        },
+        },*/
         center: [process.env.NEXT_PUBLIC_MAPBOX_CENTER_LNG, process.env.NEXT_PUBLIC_MAPBOX_CENTER_LAT],
         zoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM,
         minZoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM
