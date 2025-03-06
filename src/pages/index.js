@@ -118,8 +118,21 @@ export default function Home() {
         setLoading(false)         
         console.log("Position WATCH")
       },
-      (err) => {
-        setModalData({type: 'Warning', text: err.message, btnText: 'OK'})
+      (error) => {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
+            break;
+          case error.TIMEOUT:
+            setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
+            break;
+          default:
+            setModalData({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
+        }        
+        
         setLoading(false)
       },
       {
