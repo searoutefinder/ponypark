@@ -1,0 +1,126 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Billy the Kid Saloon",
+        "icon": "horeca"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.599415, 52.592862]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Outdoor Arena",
+        "icon": "location"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.600160, 52.592463]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "General Store",
+        "icon": "location"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.599191, 52.592952]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ma Dalton",
+        "icon": "horeca"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.599528, 52.592584]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Pony Office",
+        "icon": "location"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.599485, 52.592351]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Pony Shop",
+        "icon": "location"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.599337, 52.592399]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parkeerplaats",
+        "icon": "parking"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.599589, 52.591811]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Black Smith",
+        "icon": "location"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.599949, 52.592755]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Giant Stable",
+        "icon": "location"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.597286, 52.591161]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Animal Farm",
+        "icon": "location"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.597608, 52.592096]
+      }
+    },
+    {
+        "type": "Feature",
+        "properties": {
+          "name": "Zwembad",
+          "icon": "pool"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [6.598938, 52.592556]
+        }
+    }
+  ]
+}

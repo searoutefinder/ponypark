@@ -1,0 +1,8 @@
+[
+  {"id": 0, "name": "house", "url": "/images/icons/house.png"},
+  {"id": 1, "name": "location", "url": "/images/icons/location.png"},
+  {"id": 2, "name": "parking", "url": "/images/icons/parking.png"},
+  {"id": 3, "name": "pool", "url": "/images/icons/pool.png"},
+  {"id": 4, "name": "exit", "url": "/images/icons/exit.png"},
+  {"id": 5, "name": "horeca", "url": "/images/icons/horeca.png"}
+]
