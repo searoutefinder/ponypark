@@ -12,6 +12,7 @@ export default function Home() {
   const router = useRouter();
   const { destination } = router.query;
 
+  const [error, setError] = useState(null);
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [selectedPoi, setSelectedPoi] = useState(null);
 
