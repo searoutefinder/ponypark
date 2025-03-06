@@ -175,7 +175,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
         },*/
         center: [process.env.NEXT_PUBLIC_MAPBOX_CENTER_LNG, process.env.NEXT_PUBLIC_MAPBOX_CENTER_LAT],
         zoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM,
-        minZoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM
+        //minZoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM
       });
 
       map.popup = new mapboxgl.Popup({closeButton: false})
