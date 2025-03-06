@@ -106,8 +106,26 @@ export default function Home() {
         setLoading(false)
         console.log("Position GET")
       },
-      (err) => setError(err.message),
-      { enableHighAccuracy: true }
+      (error) => {
+        switch (error.code) {
+          case 1:
+            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
+            setIsModalShown(true)
+            break;
+          case 2:
+            setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
+            setIsModalShown(true)
+            break;
+          case 3:
+            setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
+            setIsModalShown(true)
+            break;
+          default:
+            setModalData({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
+            setIsModalShown(true)
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 10000 }
     );
 
     // Watch position for continuous updates
@@ -119,21 +137,23 @@ export default function Home() {
         console.log("Position WATCH")
       },
       (error) => {
-        switch (error.code) {
-          case 'PERMISSION_DENIED':
-            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
+        switch (true) {
+          case error.code === 1:
+            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings and refresh the map!', btnText: 'OK'})
+            setIsModalShown(true)
             break;
-          case 'POSITION_UNAVAILABLE':
+          case error.code === 2:
             setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
+            setIsModalShown(true)
             break;
-          case 'TIMEOUT':
+          case error.code === 3:
             setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
+            setIsModalShown(true)
             break;
           default:
             setModalData({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
-        }        
-        
-        setLoading(false)
+            setIsModalShown(true)
+        }
       },
       {
         enableHighAccuracy: true,

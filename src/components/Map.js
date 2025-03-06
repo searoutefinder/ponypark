@@ -19,9 +19,15 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
     }
 
     const displayRoute = async (origin, destination) => {
+      
       //let origin = [6.598693055084427, 52.59152994287401]
+      
       try {
         setLoading(true)
+
+        if(origin === false) {
+          throw new Error("Permission denied. Please enable location access in your browser settings and refresh the map!")
+        }  
         
         let routingURL = process.env.NEXT_PUBLIC_ROUTING_URL.replace('{origin}', origin.slice(0).reverse().join(',')).replace('{destination}', destination.slice(0).reverse().join(','))
         
