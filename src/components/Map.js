@@ -210,7 +210,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
 
         map.current.addSource('map-plot-src', {
           'type': 'raster',
-          'url': 'mapbox://michelarkes.cl719z86'
+          'url': process.env.NEXT_PUBLIC_MAPBOX_RASTERTILESET
         });
 
 
