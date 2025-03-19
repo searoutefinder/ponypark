@@ -10,8 +10,10 @@ import PoiPopup from './PoiPopup'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoidGFtaCIsImEiOiJja3B5M2ViM3gwNnE4MnFudXF0ZThwMTJ6In0.c0XLQtMFMUy5vf3v0_R0ww';
 
-const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, onPoiSelected, setLoading, filters, userLocation}) => {
+const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, shouldGeolocate, onGeolocationFinish, onPoiSelected, setLoading, filters, userLocation}) => {
     
+    const [markerSize, setMarkerSize] = useState(150); 
+
     const map = useRef(null);
 
     const generateFeatureCollection = (feature) => {
@@ -106,6 +108,13 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       map.current.fitBounds(bounds, {padding: {top: 50, bottom:50, left: 50, right: 50}})        
     }
 
+    const zoomToCurrentPosition = () => {
+      if(typeof userLocation === null) { return }
+      if(typeof map.current === 'undefined') { return }
+      map.current.setCenter(userLocation.geometry.coordinates)
+      map.current.setZoom(13)
+    }
+
     const filterPOIs = (filterCategories) => {
       // Return if the map ref is null or if the poi-layer is not ready/loaded
       if(map.current === null ||typeof map.current.getLayer('poi-layer') === 'undefined') { return }
@@ -139,6 +148,74 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       return feature.geometry.coordinates;  
     }
 
+    const pulsingDot = {
+      width: markerSize,
+      height: markerSize,
+      data: new Uint8Array(markerSize * markerSize * 4),
+
+      // When the layer is added to the map,
+      // get the rendering context for the map canvas.
+      onAdd: function () {
+          const canvas = document.createElement('canvas');
+          canvas.width = this.width;
+          canvas.height = this.height;
+          this.context = canvas.getContext('2d');
+      },
+
+      // Call once before every frame where the icon will be used.
+      render: function () {
+          const duration = 1000;
+          const t = (performance.now() % duration) / duration;
+
+          const radius = (markerSize / 2) * 0.3;
+          const outerRadius = (markerSize / 2) * 0.7 * t + radius;
+          const context = this.context;
+
+          // Draw the outer circle.
+          context.clearRect(0, 0, this.width, this.height);
+          context.beginPath();
+          context.arc(
+              this.width / 2,
+              this.height / 2,
+              outerRadius,
+              0,
+              Math.PI * 2
+          );
+          context.fillStyle = `rgba(45, 122, 247, ${1 - t})`;
+          context.fill();
+
+          // Draw the inner circle.
+          context.beginPath();
+          context.arc(
+              this.width / 2,
+              this.height / 2,
+              radius,
+              0,
+              Math.PI * 2
+          );
+          context.fillStyle = 'rgba(45, 122, 247, 1)';
+          context.strokeStyle = 'white';
+          context.lineWidth = 2 + 4 * (1 - t);
+          context.fill();
+          context.stroke();
+
+          // Update this image's data with data from the canvas.
+          this.data = context.getImageData(
+              0,
+              0,
+              this.width,
+              this.height
+          ).data;
+
+          // Continuously repaint the map, resulting
+          // in the smooth animation of the dot.
+          map.current.triggerRepaint();
+
+          // Return `true` to let the map know that the image was updated.
+          return true;
+      }
+    }    
+
     useEffect(() => {
       if(routeShouldRun === false) { return }
       
@@ -148,6 +225,14 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       // Signal back to the page that routing has been started
       onRoutingFinish()
     }, [routeShouldRun])
+
+    useEffect(() => {
+      if(shouldGeolocate === false) { return }
+      
+      zoomToCurrentPosition()
+
+      onGeolocationFinish()
+    }, [shouldGeolocate])    
 
     // define the map, runs only once
     useEffect(() => {
@@ -172,6 +257,8 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
         zoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM,
         minZoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM
       });
+
+      map.current.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
 
       map.popup = new mapboxgl.Popup({closeButton: false})
       map.poiPopup = new mapboxgl.Popup({closeButton: false})
@@ -235,11 +322,14 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
 
         map.current.addLayer({
           id: 'userlocation-layer',
-          type: 'circle',
+          type: 'symbol',
           source: 'userlocation-src',
-          paint: {
+          /*paint: {
             'circle-radius': 10,
             'circle-color': '#FF0000'
+          },*/
+          layout: {
+            'icon-image': 'pulsing-dot'
           }
         })                      
 

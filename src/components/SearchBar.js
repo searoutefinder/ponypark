@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
-import { XCircleIcon, MapPinIcon, AdjustmentsVerticalIcon, MapIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon, MapPinIcon, MapIcon } from "@heroicons/react/24/solid";
 import { MapIcon as MapIconOutline } from "@heroicons/react/24/outline";
 import houseData from '../data/houses.json'
 import icons from '../data/icons.json'
 import LegendItem from './LegendItem'
 
-const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterChange}) => {
+const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterChange, onGeolocationRequested}) => {
   const [query, setQuery] = useState("");
   const [houses, setHouses] = useState({ name: null, feature: null })
   const [showSuggestions, setShowSuggestions] = useState(false); 
@@ -44,6 +44,10 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
     onQueryCancel()
   };
   
+  const handleGeolocate = () =>{
+    onGeolocationRequested()
+  }
+
   const toggleLegend = () => {
     setShowLegend(!showLegend)
   }
@@ -100,6 +104,7 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
               block
               w-full
               p-4
+              pr-[9em]
               ps-10
               text-sm
               text-gray-600
@@ -124,7 +129,7 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
               onClick={handleClear}
               className="text-gray-600
               absolute
-              end-[3rem]
+              end-[5.5rem]
               bottom-2.5
               bg-white-700
               hover:bg-white-800
@@ -142,6 +147,29 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
               <XCircleIcon className="w-5 h-5" />
             </button>
           )}
+
+          <button
+              onClick={handleGeolocate}
+              className="text-gray-600
+              absolute
+              end-[3.25rem]
+              bottom-2.5
+              bg-white-700
+              hover:bg-white-800
+              focus:ring-4
+              focus:outline-none
+              focus:ring-gray-300
+              font-medium
+              rounded-lg
+              text-sm
+              pr-2
+              pl-2
+              pt-2
+              pb-2"              
+            >
+
+            <MapPinIcon className="w-5 h-5 text-gray-600" />              
+          </button>
 
           <button
             onClick={toggleLegend} 

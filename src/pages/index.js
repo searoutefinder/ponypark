@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Map from '../components/Map'
 import SearchBar from '../components/SearchBar';
 import LoaderScreen from '../components/LoaderScreen';
@@ -18,6 +19,7 @@ export default function Home() {
   const [routeDestination, setRouteDestination] = useState(null);
   const [routeVisible, setRouteVisible] = useState(false);
   const [routeRequest, setRouteRequest] = useState(false);
+  const [geolocateRequest, setGeolocateRequest] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [modalData, setModalData] = useState(null);
 
@@ -56,6 +58,54 @@ export default function Home() {
   // User initiated a route planning, time to display the route layer on the map
   const onRoutingStartHandler = () => {
     setRouteVisible(true)
+  }
+
+  // User clicks on the map ping in the searchbar to position himself on the map
+  const geolocateUser = () => {
+    if (!navigator.geolocation) {
+      setModalData({type: 'Warning', text: `Geolocation is not supported by your browser.`, btnText: 'OK'})
+      setIsModalShown(true)
+      setLoading(false)
+      return;
+    }
+
+    setLoading(true)
+
+    // Get current position once
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        let feature = {"type": "Feature", "properties": {}, "geometry": {"type": "Point", "coordinates": [position.coords.longitude, position.coords.latitude]}}   
+        setLocation(feature);
+        setGeolocateRequest(true);
+        setLoading(false)
+        console.log("Position GET")
+      },
+      (error) => {
+        switch (error.code) {
+          case 1:
+            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
+            setIsModalShown(true)
+            break;
+          case 2:
+            setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
+            setIsModalShown(true)
+            break;
+          case 3:
+            setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
+            setIsModalShown(true)
+            break;
+          default:
+            setModalData({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
+            setIsModalShown(true)
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );        
+  }
+
+  // Set the flag that indicates to the map if a routing is needed or not
+  const geolocateRequestReset = () => {
+    setGeolocateRequest(false)
   }
 
   // Something is underway, toggle the loading screen
@@ -167,6 +217,12 @@ export default function Home() {
 
   return (
     <div className="relative h-screen w-full">
+      <Head>
+        <title>PonyparkCity Map</title>
+        <meta name="description" content="Interactive map of PonyparkCity" />
+        <meta property="og:title" content="PonyparkCity Map" />
+        <meta property="og:description" content="Interactive map of PonyparkCity" />
+      </Head>      
       <Map
         selectedHouse={selectedHouse}
         routeShouldRun={routeRequest}
@@ -176,6 +232,8 @@ export default function Home() {
         routeDestination={routeDestination}
         onRoutingStart={onRoutingStartHandler}
         onRoutingFinish={routeRequestReset}
+        shouldGeolocate={geolocateRequest}
+        onGeolocationFinish={geolocateRequestReset}
         setLoading={setLoading}        
         onRouteDestinationSelected={routeDestinationSelectedHandler}
         onPoiSelected={poiSelectedHandler}
@@ -186,6 +244,7 @@ export default function Home() {
         onSuggestionSelected={searchBarSuggestionSelected}
         onQueryCancel={searchBarQueryCanceled}
         onFilterChange={filtersChangeHandler}
+        onGeolocationRequested={geolocateUser}
       />
 
 
