@@ -139,7 +139,7 @@ export default function Home() {
   }
 
   // Geolocation
-  /*useEffect(() => {
+  useEffect(() => {
     if (!navigator.geolocation) {
       setModalData({type: 'Warning', text: `Geolocation is not supported by your browser.`, btnText: 'OK'})
       setIsModalShown(true)
@@ -214,7 +214,7 @@ export default function Home() {
 
     // Cleanup function
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);*/
+  }, []);
 
   return (
     <div className="relative h-screen w-full">
