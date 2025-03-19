@@ -1,6 +1,22 @@
 {
   "type": "FeatureCollection",
   "features": [
+    {"type": "Feature", "properties": {"name": "Diamond Mine & Shoot Out", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.597065,52.592054]}},
+    {"type": "Feature", "properties": {"name": "Playmobil Village Indoor", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.596411,52.591741]}},
+    {"type": "Feature", "properties": {"name": "Lucky Town", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.596406,52.591386]}},
+    {"type": "Feature", "properties": {"name": "Viva Mexico & Bowling", "icon": "horeca"}, "geometry": {"type": "Point", "coordinates": [6.596981,52.591562]}},
+    {"type": "Feature", "properties": {"name": "Midgetgolf", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.600525,52.592087]}},
+    {"type": "Feature", "properties": {"name": "Westernshop El Paso", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.596748,52.591751]}},
+    {"type": "Feature", "properties": {"name": "Sunset Beach", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.592823,52.591455]}},
+    {"type": "Feature", "properties": {"name": "The Bounty Bar", "icon": "horeca"}, "geometry": {"type": "Point", "coordinates": [6.593027,52.591125]}},
+    {"type": "Feature", "properties": {"name": "Wash House", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.597865,52.592394]}},
+    {"type": "Feature", "properties": {"name": "Receptie", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.598620,52.591951]}},
+    {"type": "Feature", "properties": {"name": "Wild West Koeien", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.598384,52.591525]}},
+    {"type": "Feature", "properties": {"name": "Aval", "icon": "recycle"}, "geometry": {"type": "Point", "coordinates": [ 6.598229373418411,52.592445809536564]}},
+    {"type": "Feature", "properties": {"name": "Park Exit", "icon": "exit"}, "geometry": {"type": "Point", "coordinates": [ 6.601512397216036,52.59052634623463]}},
+    {"type": "Feature", "properties": {"name": "Charge Car", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.599361265624605,52.59174190744685]}},
+    {"type": "Feature", "properties": {"name": "Beach Tunnel", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.593428562779298,52.591552534424395]}},
+    {"type": "Feature", "properties": {"name": "Pony Strand", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.581267898689918,52.59250024842885]}},    
     {
       "type": "Feature",
       "properties": {
