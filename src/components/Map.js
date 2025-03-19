@@ -15,14 +15,21 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
     const [markerSize, setMarkerSize] = useState(150); 
 
     const map = useRef(null);
+    const selectedHouseRef = useRef(selectedHouse);
 
-    const generateFeatureCollection = (feature) => {
-      return {"type": "FeatureCollection", "features": [feature]}
+    const generateFeatureCollection = (feature = undefined) => {
+      if(typeof feature === 'undefined') {
+        return {"type": "FeatureCollection", "features": []}
+      }
+      else
+      {
+        return {"type": "FeatureCollection", "features": [feature]}
+      }
     }
 
     const displayRoute = async (origin, destination) => {
       
-      //let origin = [6.598693055084427, 52.59152994287401]
+      origin = [6.598693055084427, 52.59152994287401]
       
       try {
         setLoading(true)
@@ -88,15 +95,24 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
 
         if(routeVisible){
           map.current.setLayoutProperty('route-layer', 'visibility', 'visible')
-          map.current.setLayoutProperty('route-extension-layer', 'visibility', 'visible')
+          map.current.setLayoutProperty('route-extension-layer', 'visibility', 'visible')          
         }      
 
         setLoading(false)
       }
       catch(error) {
-        console.log(error)
         openModal({type: 'Warning', text: error.message, btnText: 'OK'})
       }
+    }
+
+    const displaySelectedHouse = () => {
+      if(typeof map.current === 'undefined') { return }
+      map.current.getSource('selectedhouse-src').setData(generateFeatureCollection(selectedHouse))           
+    }
+
+    const hideSelectedHouse = () => {
+      if(typeof map.current === 'undefined' || typeof map.current.getSource('selectedhouse-src') === 'undefined') { return }
+      map.current.getSource('selectedhouse-src').setData(generateFeatureCollection())      
     }
 
     const zoomToBounds = (coords) => {
@@ -146,6 +162,21 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       }
     
       return feature.geometry.coordinates;  
+    }
+
+    const selectedHouseClickHandler = () => {
+
+      if(selectedHouseRef.current === null) { return }
+
+      const popupContainer = document.createElement('div');
+      const root = createRoot(popupContainer);
+      root.render(<HousePopup houseData={selectedHouseRef.current} onDirectionPressed={onRouteDestinationSelected}/>); 
+      
+      map.popup
+        .setLngLat(selectedHouseRef.current.geometry.coordinates)
+        .setOffset([0, -10])
+        .setDOMContent(popupContainer)
+        .addTo(map.current)       
     }
 
     const pulsingDot = {
@@ -280,6 +311,11 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
           data: {type: "FeatureCollection", features: []}
         })
 
+        map.current.addSource('selectedhouse-src', {
+          type: 'geojson',
+          data: {type: "FeatureCollection", features: []}
+        })        
+
         map.current.addSource('route-src', {
           type: 'geojson',
           data: {type: "FeatureCollection", features: []}
@@ -324,10 +360,6 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
           id: 'userlocation-layer',
           type: 'symbol',
           source: 'userlocation-src',
-          /*paint: {
-            'circle-radius': 10,
-            'circle-color': '#FF0000'
-          },*/
           layout: {
             'icon-image': 'pulsing-dot'
           }
@@ -360,6 +392,16 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
             'line-color': '#000',
             'line-dasharray': [1, 2]
           }
+        })
+        
+        map.current.addLayer({
+          id: 'selectedhouse-layer',
+          type: 'circle',
+          source: 'selectedhouse-src',
+          paint: {
+            'circle-radius': 10,
+            'circle-color': '#FF0000'
+          }
         })        
          
         // Add click event
@@ -375,9 +417,11 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
             .setLngLat(e.features[0].geometry.coordinates)
             .setDOMContent(popupContainer)
             .addTo(map.current)            
-        })        
-        
-      })
+        }) 
+
+        map.current.on("click", "selectedhouse-layer", selectedHouseClickHandler)
+                
+      })     
   
     }, []);
 
@@ -402,37 +446,51 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       if(!routeVisible) {
         map.current.setLayoutProperty('route-layer', 'visibility', 'none')
         map.current.setLayoutProperty('route-extension-layer', 'visibility', 'none')
-        map.popup.remove()
       }
       else
       {
         map.current.setLayoutProperty('route-layer', 'visibility', 'visible')
         map.current.setLayoutProperty('route-extension-layer', 'visibility', 'visible')
+        map.popup.remove()
       }
     }, [routeVisible])
 
     // selectedHouse prop changed
     useEffect(() => {
-      if(selectedHouse === null) { return }
+      
+      selectedHouseRef.current = selectedHouse;
+
       if(!map.current) { return }
+      if(selectedHouseRef.current === null) {       
+        // Hide map marker
+        hideSelectedHouse()
 
-      map.current.setCenter(selectedHouse.geometry.coordinates)
-      map.current.setZoom(19)
+        // Hide map popup
+        map.popup.remove()
+        return 
+      }
 
+      map.current.setCenter(selectedHouseRef.current.geometry.coordinates)
+      map.current.setZoom(17)
+
+      // Display map marker
+      displaySelectedHouse()
+
+      // Display map popup
       const popupContainer = document.createElement('div');
       const root = createRoot(popupContainer);
-      root.render(<HousePopup houseData={selectedHouse} onDirectionPressed={onRouteDestinationSelected}/>); 
-
+      root.render(<HousePopup houseData={selectedHouseRef.current} onDirectionPressed={onRouteDestinationSelected}/>); 
+      
       map.popup
-        .setLngLat(selectedHouse.geometry.coordinates)
+        .setLngLat(selectedHouseRef.current.geometry.coordinates)
+        .setOffset([0, -10])
         .setDOMContent(popupContainer)
         .addTo(map.current)
-
+       
     }, [selectedHouse])
     
     // userLocation prop changed
     useEffect(() => {
-      console.log(userLocation)
       if(typeof map.current.getSource('userlocation-src') !== 'undefined') {
         map.current.getSource('userlocation-src').setData(generateFeatureCollection(userLocation))
       }
