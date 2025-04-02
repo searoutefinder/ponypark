@@ -9,7 +9,7 @@
     {"type": "Feature", "properties": {"name": "Westernshop El Paso", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.596748,52.591751]}},
     {"type": "Feature", "properties": {"name": "Sunset Beach", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.592823,52.591455]}},
     {"type": "Feature", "properties": {"name": "The Bounty Bar", "icon": "horeca"}, "geometry": {"type": "Point", "coordinates": [6.593027,52.591125]}},
-    {"type": "Feature", "properties": {"name": "Wash House", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.597865,52.592394]}},
+    {"type": "Feature", "properties": {"name": "Wash House", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.5980282612, 52.5923407031]}},
     {"type": "Feature", "properties": {"name": "Receptie", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [6.598620,52.591951]}},
     {"type": "Feature", "properties": {"name": "Wild West Koeien", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.598384,52.591525]}},
     {"type": "Feature", "properties": {"name": "Aval", "icon": "recycle"}, "geometry": {"type": "Point", "coordinates": [ 6.598229373418411,52.592445809536564]}},
