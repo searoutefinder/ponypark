@@ -29,7 +29,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
 
     const displayRoute = async (origin, destination) => {
       
-      //origin = [6.598693055084427, 52.59152994287401]
+      origin = [6.598693055084427, 52.59152994287401]
       
       try {
         setLoading(true)
@@ -177,6 +177,11 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
         .setOffset([0, -10])
         .setDOMContent(popupContainer)
         .addTo(map.current)       
+    }
+
+    const poiRoutingStartHandler = (data) => {
+      onPoiSelected(data)
+      map.poiPopup.remove()
     }
 
     const pulsingDot = {
@@ -411,7 +416,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
           const poiFeature = {...{type: "Feature"}, ...{properties: {...e.features[0].properties}}, ...{geometry: {...e.features[0].geometry}}}
           const popupContainer = document.createElement('div');
           const root = createRoot(popupContainer);
-          root.render(<PoiPopup name={e.features[0].properties.name} poiData={poiFeature} onDirectionButtonPressed={onPoiSelected}/>);             
+          root.render(<PoiPopup name={e.features[0].properties.name} poiData={poiFeature} onDirectionButtonPressed={poiRoutingStartHandler}/>);             
           
           map.poiPopup
             .setLngLat(e.features[0].geometry.coordinates)
