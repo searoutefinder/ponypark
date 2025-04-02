@@ -29,7 +29,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
 
     const displayRoute = async (origin, destination) => {
       
-      origin = [6.598693055084427, 52.59152994287401]
+      //origin = [6.598693055084427, 52.59152994287401]
       
       try {
         setLoading(true)
