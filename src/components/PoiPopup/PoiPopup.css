@@ -1,7 +1,0 @@
-.mapboxgl-popup {
-  width:300px !important;
-  max-width: unset !important;
-}
-.mapboxgl-popup-content{
-  padding: 0px !important;  
-}
