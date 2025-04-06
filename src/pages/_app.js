@@ -11,6 +11,23 @@ function MyApp({ Component, pageProps }) {
   NProgress.configure({ showSpinner: false });
 
   useEffect(() => {
+    const handleTouchMove = (e) => {
+      const isPinchZoom = e.touches.length > 1;
+      const mapElement = document.getElementById('map');
+
+      if (isPinchZoom && mapElement && !mapElement.contains(e.target)) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
+  useEffect(() => {
     const handleStart = () => {
       NProgress.start();
       setIsPageTransitioning(true);
