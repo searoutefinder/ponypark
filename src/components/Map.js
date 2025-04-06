@@ -7,7 +7,6 @@ import pois from '../data/pois.json'
 import icons from '../data/icons.json'
 import HousePopup from './HousePopup/HousePopup'
 import PoiPopup from './PoiPopup/PoiPopup'
-import './PoiPopup/PoiPopup.css'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoidGFtaCIsImEiOiJja3B5M2ViM3gwNnE4MnFudXF0ZThwMTJ6In0.c0XLQtMFMUy5vf3v0_R0ww';
 
