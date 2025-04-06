@@ -5,8 +5,9 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import pois from '../data/pois.json'
 import icons from '../data/icons.json'
-import HousePopup from './HousePopup'
-import PoiPopup from './PoiPopup'
+import HousePopup from './HousePopup/HousePopup'
+import PoiPopup from './PoiPopup/PoiPopup'
+import './PoiPopup/PoiPopup.css'
 
 mapboxgl.accessToken = 'pk.eyJ1IjoidGFtaCIsImEiOiJja3B5M2ViM3gwNnE4MnFudXF0ZThwMTJ6In0.c0XLQtMFMUy5vf3v0_R0ww';
 
@@ -297,7 +298,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       map.current.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
 
       map.popup = new mapboxgl.Popup({closeButton: false})
-      map.poiPopup = new mapboxgl.Popup({closeButton: false})
+      map.poiPopup = new mapboxgl.Popup({closeButton: false, offset: [0, -40]})
 
       map.current.on('load', () => {
 
@@ -357,7 +358,8 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
           layout: {
             'icon-allow-overlap': true,
             'icon-size': 0.5,
-            'icon-image': ['get', 'icon']
+            'icon-image': ['get', 'icon'],
+            'icon-anchor': 'bottom'
           }
         })
 
@@ -408,7 +410,15 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
             'circle-color': '#FF0000'
           }
         })        
-         
+        
+        map.current.on("mouseover", "poi-layer", (e) => {
+          map.current.getCanvas().style.cursor = 'pointer';
+        })
+
+        map.current.on("mouseout", "poi-layer", (e) => {
+          map.current.getCanvas().style.cursor = '';
+        })        
+
         // Add click event
         map.current.on("click", "poi-layer", (e) => {
           
