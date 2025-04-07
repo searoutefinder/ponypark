@@ -10,8 +10,8 @@ const HousePopup = ({houseData, onDirectionPressed}) => {
   return(
     <div>  
       <Image 
-        src={'/images/poi/placeholder.png'} 
-        alt="Photo of a house in PonyPark" 
+        src={houseData.properties.type === 'ranch house' ? '/images/poi/ranchhouse.png': '/images/poi/cowboyhouse.png'} 
+        alt={`${houseData.properties.type} in PonyPark City`} 
         width={450}
         height={270}
       />

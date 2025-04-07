@@ -15,7 +15,7 @@
     {"type": "Feature", "properties": {"name": "Aval", "img": "/images/poi/placeholder.png", "icon": "recycle"}, "geometry": {"type": "Point", "coordinates": [ 6.598229373418411,52.592445809536564]}},
     {"type": "Feature", "properties": {"name": "Park Exit", "img": "/images/poi/placeholder.png", "icon": "exit"}, "geometry": {"type": "Point", "coordinates": [ 6.601512397216036,52.59052634623463]}},
     {"type": "Feature", "properties": {"name": "Charge Car", "img": "/images/poi/placeholder.png", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.599361265624605,52.59174190744685]}},
-    {"type": "Feature", "properties": {"name": "Beach Tunnel", "img": "/images/poi/placeholder.png", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.593428562779298,52.591552534424395]}},
+    {"type": "Feature", "properties": {"name": "Beach Tunnel", "img": "/images/poi/beachtunnel.png", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.593428562779298,52.591552534424395]}},
     {"type": "Feature", "properties": {"name": "Pony Strand", "img": "/images/poi/ponystrand.png", "icon": "location"}, "geometry": {"type": "Point", "coordinates": [ 6.581267898689918,52.59250024842885]}},    
     {
       "type": "Feature",
