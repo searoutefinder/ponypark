@@ -7,6 +7,8 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
   const onCloseRef = useRef(onClose);
   const onResultRef = useRef(onResult);
   const [startError, setStartError] = useState(null);
+  const [lastScannedValue, setLastScannedValue] = useState("");
+  const [scanInfo, setScanInfo] = useState(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -20,12 +22,20 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
     const data = String(result?.data ?? "").trim();
     const resolvedData = data;
 
+    setLastScannedValue(resolvedData);
+
     const match =
       resolvedData.match(/\/treasure\/(\d+)\b/i) ||
       resolvedData.match(/^treasure:(\d+)$/i) ||
       resolvedData.match(/^(\d+)$/);
 
-    if (match) onResultRef.current?.(Number(match[1]));
+    if (match) {
+      setScanInfo(null);
+      onResultRef.current?.(Number(match[1]));
+      return;
+    }
+
+    setScanInfo("QR kod felismerve, de a tartalom nem tamogatott formatumu.");
   };
 
   useEffect(() => {
@@ -35,6 +45,8 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
     if (!video) return;
 
     setStartError(null);
+    setLastScannedValue("");
+    setScanInfo(null);
 
     const scanner = new QrScanner(video, cameraHandler, {
       preferredCamera: "environment",
@@ -85,6 +97,18 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
       <div className="p-3 text-white/80 text-sm text-center">
         {startError ?? "Iranyitsd a kamerat a QR kodra."}
       </div>
+
+      {!startError && scanInfo ? (
+        <div className="px-3 pb-2 text-xs text-yellow-300 text-center">
+          {scanInfo}
+        </div>
+      ) : null}
+
+      {!startError && lastScannedValue ? (
+        <div className="px-3 pb-3 text-xs text-white/60 text-center break-all">
+          Utolso beolvasott ertek: {lastScannedValue}
+        </div>
+      ) : null}
     </div>
   );
 };
