@@ -8,6 +8,7 @@ import LoaderScreen from '../components/LoaderScreen';
 import Modal from '../components/Modal';
 import icons from '../data/icons.json'
 import houseData from '../data/houses.json'
+import QrScannerOverlay from "../components/QrScanner/QrScanner";
 
 export default function Home() {
   const router = useRouter();
@@ -25,7 +26,13 @@ export default function Home() {
 
   const [isModalShown, setIsModalShown] = useState(false);
   const [filterCategories, setFilterCategories] = useState([]);
-  const [location, setLocation] = useState(null)
+  const [location, setLocation] = useState(null);
+
+  // Új state-ek
+  const [treasureId, setTreasureId] = useState(7);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [questionSet, setQuestionSet] = useState(null); // vagy questions
+  const [quizOpen, setQuizOpen] = useState(false);
 
 
   // POI has been selected by click using the map
@@ -138,6 +145,17 @@ export default function Home() {
     setIsModalShown(false)
   }
 
+  const onQrResult = (id) => {
+    setQrOpen(false);
+
+    alert(id)
+    // URL átírás újratöltés nélkül (feltéve, hogy a catch-all oldalad kezeli)
+    router.replace(`/treasure/${id}`, undefined, { shallow: true, scroll: false });
+
+    // itt indíthatod a kérdéssort is:
+    // loadQuestions(id); setQuizOpen(true);
+  };  
+
   // Geolocation
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -216,6 +234,36 @@ export default function Home() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
+  useEffect(() => {
+    const t = setTimeout(() => setQrOpen(true), 5000);
+    return () => clearTimeout(t);
+  }, []);  
+
+  // Ez az ami a re-routing-ért felelős
+  /*useEffect(() => {
+    const timer = setTimeout(() => {
+      if(treasureId === null) { return; }
+      router.replace(`/treasure/${treasureId}`, undefined, {
+        shallow: true,
+        scroll: false,
+      });
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, []);*/
+
+  // Ez az ami kiolvassa a treasure Id-t a URL path-ból
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const match = path.match(/^\/treasure\/(\d+)\/?$/);
+
+    if(match === null) { return; }
+
+    setTreasureId(match ? Number(match[1]) : null);
+  }, [router.isReady, router.asPath]);
+
   return (
     <div className="relative h-screen w-full">
       <Head>
@@ -247,6 +295,11 @@ export default function Home() {
         onFilterChange={filtersChangeHandler}
         onGeolocationRequested={geolocateUser}
       />
+      <QrScannerOverlay
+  open={qrOpen}
+  onClose={() => setQrOpen(false)}
+  onResult={onQrResult}
+/>
 
 
 
