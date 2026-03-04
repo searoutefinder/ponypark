@@ -13,7 +13,7 @@ import { m } from 'framer-motion';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-const Map = ({onTreasureClicked, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, shouldGeolocate, onGeolocationFinish, onPoiSelected, filters, userLocation, treasures}) => {
+const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, shouldGeolocate, onGeolocationFinish, onPoiSelected, filters, userLocation, treasures}) => {
     
     const [markerSize, setMarkerSize] = useState(150);
     const { setLoading, openModal, isMapLoaded, setIsMapLoaded } = useAppUi();
@@ -619,6 +619,20 @@ const Map = ({onTreasureClicked, selectedHouse, routeShouldRun, routeVisible, ro
         cancelled = true;
       };
     }, [treasures, isMapLoaded, treasureLoading]);
+
+    useEffect(() => {
+      if(selectedTreasure === null) { return; }
+      if(typeof map.current === "undefined") { return; }
+
+      map.current.flyto({
+        center: [selectedTreasure.longitude, selectedTreasure.latitude],
+        zoom: 15,
+        speed: 1.2,
+        curve: 1.42,
+        essential: true
+      });
+      
+    }, [selectedTreasure])
 
     return (
       <div id="map" className="absolute top-0 left-0 w-full h-full"></div>

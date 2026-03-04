@@ -22,7 +22,6 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
     const data = String(result?.data ?? "").trim();
     const resolvedData = data;
 
-    alert(JSON.stringify(data));
     setLastScannedValue(resolvedData);
 
     const match =

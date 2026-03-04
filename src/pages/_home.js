@@ -29,14 +29,14 @@ export default function Home() {
 
   // Új state-ek
   const [treasureId, setTreasureId] = useState(null);
+  const [treasureRow, setTreasureRow] = useState(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [questionSet, setQuestionSet] = useState(null); // vagy questions
   const [quizOpen, setQuizOpen] = useState(false);
 
   // Treasure data state
   const { rows, loading: treasureLoading, error: treasureError } = useTreasureData();
-  const { isLoading, isModalShown, modalData, setLoading, openModal, closeModal } = useAppUi();
-  const [treasureRow, setTreasureRow] = useState(null);
+  const { isLoading, isModalShown, modalData, setLoading, openModal, closeModal } = useAppUi();  
   
 
 
@@ -282,6 +282,7 @@ export default function Home() {
         onRouteDestinationSelected={routeDestinationSelectedHandler}
         onPoiSelected={poiSelectedHandler}
         treasures={rows}
+        selectedTreasure={treasureRow}
         onTreasureClicked={treasureClickedHandler}
       />
       <SearchBar
