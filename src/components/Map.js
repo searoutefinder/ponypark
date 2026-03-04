@@ -624,14 +624,15 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
       if(selectedTreasure === null) { return; }
       if(typeof map.current === "undefined") { return; }
 
-      map.current.flyto({
+      alert(JSON.stringify(selectedTreasure))
+      /*map.current.flyto({
         center: [selectedTreasure.longitude, selectedTreasure.latitude],
         zoom: 15,
         speed: 1.2,
         curve: 1.42,
         essential: true
-      });
-      
+      });*/
+
     }, [selectedTreasure])
 
     return (
