@@ -626,7 +626,7 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
 
       //alert(JSON.stringify(selectedTreasure))
 
-      map.current.flyto({
+      map.current.flyTo({
         center: [selectedTreasure.longitude, selectedTreasure.latitude],
         zoom: 15,
         speed: 1.2,
