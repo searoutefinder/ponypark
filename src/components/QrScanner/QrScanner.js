@@ -8,6 +8,7 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
   const onResultRef = useRef(onResult);
   const [startError, setStartError] = useState(null);
   const [lastScannedValue, setLastScannedValue] = useState("");
+  const [lastResolvedValue, setLastResolvedValue] = useState("");
   const [scanInfo, setScanInfo] = useState(null);
 
   useEffect(() => {
@@ -20,11 +21,27 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
 
   const cameraHandler = async (result) => {
     const data = String(result?.data ?? "").trim();
-    const resolvedData = data;
+    let resolvedData = data;
 
-    alert(JSON.stringify(data));
-    
-    setLastScannedValue(resolvedData);
+    setLastScannedValue(data);
+
+    if (/^https?:\/\//i.test(data)) {
+      try {
+        const response = await fetch(data, {
+          method: "GET",
+          redirect: "follow",
+        });
+
+        if (response?.url) {
+          resolvedData = response.url;
+          alert(JSON.stringify(resolvedData));
+        }
+      } catch (error) {
+        console.error("QR redirect resolution failed:", error);
+      }
+    }
+
+    setLastResolvedValue(resolvedData);
 
     const match =
       resolvedData.match(/\/treasure\/(\d+)\b/i) ||
@@ -48,6 +65,7 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
 
     setStartError(null);
     setLastScannedValue("");
+    setLastResolvedValue("");
     setScanInfo(null);
 
     const scanner = new QrScanner(video, cameraHandler, {
@@ -109,6 +127,12 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
       {!startError && lastScannedValue ? (
         <div className="px-3 pb-3 text-xs text-white/60 text-center break-all">
           Utolso beolvasott ertek: {lastScannedValue}
+        </div>
+      ) : null}
+
+      {!startError && lastResolvedValue && lastResolvedValue !== lastScannedValue ? (
+        <div className="px-3 pb-3 text-xs text-white/60 text-center break-all">
+          Feloldott vegso ertek: {lastResolvedValue}
         </div>
       ) : null}
     </div>
