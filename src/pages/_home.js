@@ -1,14 +1,17 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Map from '../components/Map'
 import SearchBar from '../components/SearchBar';
 import LoaderScreen from '../components/LoaderScreen';
 import Modal from '../components/Modal';
-import icons from '../data/icons.json'
-import houseData from '../data/houses.json'
 import QrScannerOverlay from "../components/QrScanner/QrScanner";
+
+// Context
+import { useAppUi } from "../context/AppUiContext";
+import { useTreasureData } from "../context/TreasureDataContext";
+
 
 export default function Home() {
   const router = useRouter();
@@ -21,18 +24,20 @@ export default function Home() {
   const [routeVisible, setRouteVisible] = useState(false);
   const [routeRequest, setRouteRequest] = useState(false);
   const [geolocateRequest, setGeolocateRequest] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [modalData, setModalData] = useState(null);
-
-  const [isModalShown, setIsModalShown] = useState(false);
   const [filterCategories, setFilterCategories] = useState([]);
   const [location, setLocation] = useState(null);
 
   // Új state-ek
-  const [treasureId, setTreasureId] = useState(7);
+  const [treasureId, setTreasureId] = useState(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [questionSet, setQuestionSet] = useState(null); // vagy questions
   const [quizOpen, setQuizOpen] = useState(false);
+
+  // Treasure data state
+  const { rows, loading: treasureLoading, error: treasureError } = useTreasureData();
+  const { isLoading, isModalShown, modalData, setLoading, openModal, closeModal } = useAppUi();
+  const [treasureRow, setTreasureRow] = useState(null);
+  
 
 
   // POI has been selected by click using the map
@@ -71,8 +76,7 @@ export default function Home() {
   // User clicks on the map ping in the searchbar to position himself on the map
   const geolocateUser = () => {
     if (!navigator.geolocation) {
-      setModalData({type: 'Warning', text: `Geolocation is not supported by your browser.`, btnText: 'OK'})
-      setIsModalShown(true)
+      openModal({type: 'Warning', text: `Geolocation is not supported by your browser.`, btnText: 'OK'})
       setLoading(false)
       return;
     }
@@ -91,20 +95,16 @@ export default function Home() {
       (error) => {
         switch (error.code) {
           case 1:
-            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
             break;
           case 2:
-            setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
             break;
           case 3:
-            setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
             break;
           default:
-            setModalData({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
         }
       },
       { enableHighAccuracy: true, maximumAge: 10000 }
@@ -114,11 +114,6 @@ export default function Home() {
   // Set the flag that indicates to the map if a routing is needed or not
   const geolocateRequestReset = () => {
     setGeolocateRequest(false)
-  }
-
-  // Something is underway, toggle the loading screen
-  const setLoading = (status) => {
-    setIsLoading(status)
   }
 
   // Set the flag that indicates to the map if a routing is needed or not
@@ -135,32 +130,35 @@ export default function Home() {
     setRouteRequest(true)
   }
 
-  const openModal = (modalData) => {
-    setModalData(modalData)
-    setIsModalShown(true)
-  }
+  const modalCloseHandler = useCallback(() => {
+    closeModal()
+  }, [closeModal])
 
-  const modalCloseHandler = () => {
-    setLoading(false)
-    setIsModalShown(false)
-  }
-
-  const onQrResult = (id) => {
+  const onQrResult = useCallback((id) => {
     setQrOpen(false);
 
-    alert(id)
-    // URL átírás újratöltés nélkül (feltéve, hogy a catch-all oldalad kezeli)
+    // URL rewrite without reload
     router.replace(`/treasure/${id}`, undefined, { shallow: true, scroll: false });
 
     // itt indíthatod a kérdéssort is:
-    // loadQuestions(id); setQuizOpen(true);
-  };  
+    // loadQuestions(id); 
+    // setQuizOpen(true);
+  }, [router]);
+  
+  const treasureClickedHandler = useCallback(() => {
+    setQrOpen(true);
+  }, [])
+
+  const closeQrOverlay = useCallback(() => {
+    setQrOpen(false);
+  }, [])
+
+  // Hooks
 
   // Geolocation
   useEffect(() => {
     if (!navigator.geolocation) {
-      setModalData({type: 'Warning', text: `Geolocation is not supported by your browser.`, btnText: 'OK'})
-      setIsModalShown(true)
+      openModal({type: 'Warning', text: `Geolocation is not supported by your browser.`, btnText: 'OK'})
       setLoading(false)
       return;
     }
@@ -178,20 +176,16 @@ export default function Home() {
       (error) => {
         switch (error.code) {
           case 1:
-            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings.', btnText: 'OK'})
             break;
           case 2:
-            setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
             break;
           case 3:
-            setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
             break;
           default:
-            setModalData({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
         }
       },
       { enableHighAccuracy: true, maximumAge: 10000 }
@@ -208,20 +202,16 @@ export default function Home() {
       (error) => {
         switch (true) {
           case error.code === 1:
-            setModalData({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings and refresh the map!', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'Permission denied. Please enable location access in your browser settings and refresh the map!', btnText: 'OK'})
             break;
           case error.code === 2:
-            setModalData({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'Location information is unavailable.', btnText: 'OK'})
             break;
           case error.code === 3:
-            setModalData({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'The request to get location timed out.', btnText: 'OK'})
             break;
           default:
-            setModalData({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
-            setIsModalShown(true)
+            openModal({type: 'Warning', text: 'An unknown error occurred.', btnText: 'OK'})
         }
       },
       {
@@ -234,25 +224,7 @@ export default function Home() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(() => setQrOpen(true), 5000);
-    return () => clearTimeout(t);
-  }, []);  
-
-  // Ez az ami a re-routing-ért felelős
-  /*useEffect(() => {
-    const timer = setTimeout(() => {
-      if(treasureId === null) { return; }
-      router.replace(`/treasure/${treasureId}`, undefined, {
-        shallow: true,
-        scroll: false,
-      });
-    }, 4000);
-
-    return () => clearTimeout(timer);
-  }, []);*/
-
-  // Ez az ami kiolvassa a treasure Id-t a URL path-ból
+  // Read from treasure URL and save results to state
   useEffect(() => {
     if (!router.isReady) return;
 
@@ -263,6 +235,30 @@ export default function Home() {
 
     setTreasureId(match ? Number(match[1]) : null);
   }, [router.isReady, router.asPath]);
+
+  // Monitor changes to treasureId
+  useEffect(() => {
+
+    if(treasureId === null) { 
+      setTreasureRow(null);
+      return 
+    }
+    
+    if (treasureLoading || treasureError) return;
+
+    const match = rows.find((row) => Number(row.treasure_id) === Number(treasureId));
+    
+    // Copy the data for the matched row into the treasureRow state variable
+    setTreasureRow(match ?? null);
+
+  }, [treasureId, rows, treasureLoading, treasureError]);
+
+  // Monitor changes to treasureRow, the state value that holds the full details for a given treasure
+  useEffect(() => {
+    if (!treasureRow) return;
+
+    console.log("Aktuális treasure:", treasureRow);    
+  }, [treasureRow]);
 
   return (
     <div className="relative h-screen w-full">
@@ -283,10 +279,10 @@ export default function Home() {
         onRoutingFinish={routeRequestReset}
         shouldGeolocate={geolocateRequest}
         onGeolocationFinish={geolocateRequestReset}
-        setLoading={setLoading}        
         onRouteDestinationSelected={routeDestinationSelectedHandler}
         onPoiSelected={poiSelectedHandler}
-        openModal={openModal}
+        treasures={rows}
+        onTreasureClicked={treasureClickedHandler}
       />
       <SearchBar
         destination={destination}
@@ -296,10 +292,10 @@ export default function Home() {
         onGeolocationRequested={geolocateUser}
       />
       <QrScannerOverlay
-  open={qrOpen}
-  onClose={() => setQrOpen(false)}
-  onResult={onQrResult}
-/>
+        open={qrOpen}
+        onClose={closeQrOverlay}
+        onResult={onQrResult}
+      />
 
 
 

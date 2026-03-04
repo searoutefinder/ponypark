@@ -4,6 +4,8 @@ import Script from 'next/script';
 import NProgress from "nprogress";
 import "nprogress/nprogress.css"; // Import styles
 import '../styles/globals.css';
+import { AppUiProvider } from "../context/AppUiContext";
+import { TreasureDataProvider } from "../context/TreasureDataContext";
 
 const GA_MEASUREMENT_ID = 'G-9Z79CK541L';
 
@@ -62,27 +64,31 @@ function MyApp({ Component, pageProps }) {
     return () => router.events.off('routeChangeComplete', handleRouteChange);
   }, [router.events]);  
 
-  return <div className={`${isPageTransitioning ? 'fade-exit' : 'fade-enter'} transition-opacity duration-500`}>
-    <Script
-      strategy="afterInteractive"
-      src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-    />
-    <Script
-      id="gtag-init"
-      strategy="afterInteractive"
-      dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}', {
-              page_path: window.location.pathname,
-            });
-          `,
-      }}
-    />       
-    <Component {...pageProps} />
-  </div>
+  return <AppUiProvider>
+    <TreasureDataProvider>
+      <div className={`${isPageTransitioning ? 'fade-exit' : 'fade-enter'} transition-opacity duration-500`}>
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}', {
+                  page_path: window.location.pathname,
+                });
+              `,
+          }}
+        />
+        <Component {...pageProps} />
+      </div>
+    </TreasureDataProvider>
+  </AppUiProvider>
 }
 
 export default MyApp;

@@ -15,11 +15,11 @@ const PoiPopup = ({name, poiData, onDirectionButtonPressed}) => {
         width={450}
         height={270}
       />
-      <div class="flex p-2 w-full">
-        <div class="w-1/2 flex items-center">
-          <span class="text-gray-600 font-semibold text-md">{name}</span>
+      <div className="flex p-2 w-full">
+        <div className="w-1/2 flex items-center">
+          <span className="text-gray-600 font-semibold text-md">{name}</span>
         </div>
-        <div class="w-1/2 text-end">
+        <div className="w-1/2 text-end">
           <button className="p-1 rounded text-gray-600 text-md w-full text-gray-700 bg-[#ffdb70] hover:bg-[#fcc212]" onClick={initDirectionsRequest}>Show Route here</button>  
         </div>
       </div>            

@@ -7,15 +7,23 @@ import pois from '../data/pois.json'
 import icons from '../data/icons.json'
 import HousePopup from './HousePopup/HousePopup'
 import PoiPopup from './PoiPopup/PoiPopup'
+import { useAppUi } from '../context/AppUiContext';
+import { useTreasureData } from "../context/TreasureDataContext";
+import { m } from 'framer-motion';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoidGFtaCIsImEiOiJja3B5M2ViM3gwNnE4MnFudXF0ZThwMTJ6In0.c0XLQtMFMUy5vf3v0_R0ww';
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, shouldGeolocate, onGeolocationFinish, onPoiSelected, setLoading, filters, userLocation}) => {
+const Map = ({onTreasureClicked, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, shouldGeolocate, onGeolocationFinish, onPoiSelected, filters, userLocation, treasures}) => {
     
-    const [markerSize, setMarkerSize] = useState(150); 
+    const [markerSize, setMarkerSize] = useState(150);
+    const { setLoading, openModal, isMapLoaded, setIsMapLoaded } = useAppUi();
+    const { rows, loading: treasureLoading, error: treasureError } = useTreasureData();
 
     const map = useRef(null);
     const selectedHouseRef = useRef(selectedHouse);
+
+
+    // Methods
 
     const generateFeatureCollection = (feature = undefined) => {
       if(typeof feature === 'undefined') {
@@ -32,31 +40,31 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       //origin = [6.598693055084427, 52.59152994287401]
       
       try {
-        setLoading(true)
+        setLoading(true);
 
         if(origin === false) {
-          throw new Error("Permission denied. Please enable location access in your browser settings and refresh the map!")
+          throw new Error("Permission denied. Please enable location access in your browser settings and refresh the map!");
         }  
         
         let routingURL = process.env.NEXT_PUBLIC_ROUTING_URL.replace('{origin}', origin.slice(0).reverse().join(',')).replace('{destination}', destination.slice(0).reverse().join(','))
         
-        let routeResponseRaw = await fetch(routingURL)
+        let routeResponseRaw = await fetch(routingURL);
         
         if(routeResponseRaw.status !== 200) {
-          throw new Error("Either one or both endpoints of the route falls outside the routing coverage area.")
+          throw new Error("Either one or both endpoints of the route falls outside the routing coverage area.");
         }
 
         let routeResponse = await routeResponseRaw.json()
 
         // Return if any of the points are out of bounds or there is no route returned
         if(typeof routeResponse.paths === 'undefined') {
-          throw new Error("There are no paths returned from the routing service")
+          throw new Error("There are no paths returned from the routing service");
         }
 
-        onRoutingStart()
+        onRoutingStart();
 
-        let polylineGeometry = JSON.parse(JSON.stringify(routeResponse.paths[0].points))
-        let destinationPoint = destination.slice(0)
+        let polylineGeometry = JSON.parse(JSON.stringify(routeResponse.paths[0].points));
+        let destinationPoint = destination.slice(0);
 
         // Update the source of the route-layer with the generated route's JSON
         map.current.getSource('route-src')
@@ -72,7 +80,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
                 }
               }
             ]
-          })
+          });
         
         
         map.current.getSource('route-extension-src')
@@ -88,20 +96,20 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
                 }
               }
             ]
-          })         
+          });         
 
         // Adjust map to the bounds of the generated route  
-        zoomToBounds(routeResponse.paths[0].points.coordinates)
+        zoomToBounds(routeResponse.paths[0].points.coordinates);
 
         if(routeVisible){
-          map.current.setLayoutProperty('route-layer', 'visibility', 'visible')
-          map.current.setLayoutProperty('route-extension-layer', 'visibility', 'visible')          
+          map.current.setLayoutProperty('route-layer', 'visibility', 'visible');
+          map.current.setLayoutProperty('route-extension-layer', 'visibility', 'visible');          
         }      
 
-        setLoading(false)
+        setLoading(false);
       }
       catch(error) {
-        openModal({type: 'Warning', text: error.message, btnText: 'OK'})
+        openModal({type: 'Warning', text: error.message, btnText: 'OK'});
       }
     }
 
@@ -184,6 +192,191 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       map.poiPopup.remove()
     }
 
+    const ensureMapImage = (imageId, imageUrl) => {
+      return new Promise((resolve, reject) => {
+        if (!map.current) {
+          reject(new Error("Map is not initialized"));
+          return;
+        }
+
+        if (map.current.hasImage(imageId)) {
+          resolve();
+          return;
+        }
+
+        map.current.loadImage(imageUrl, (error, image) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          if (!map.current.hasImage(imageId)) {
+            map.current.addImage(imageId, image);
+          }
+
+          resolve();
+        });
+      });
+    }
+
+    const onMapLoadedHandler = () => {
+        
+        icons.forEach((icon, index) => {
+          map.current.loadImage(icon.url, (error, image) => {
+            if (error) throw error;
+            if (!map.current.hasImage(icon.name)) {
+              map.current.addImage(icon.name, image);
+            }     
+          })
+        });
+
+        // Add sources and layers
+        map.current.addSource('userlocation-src', {
+          type: 'geojson',
+          data: {type: "FeatureCollection", features: []}
+        });
+
+        map.current.addSource('selectedhouse-src', {
+          type: 'geojson',
+          data: {type: "FeatureCollection", features: []}
+        }); 
+        
+        map.current.addSource('treasure-location-src', {
+          type: 'geojson',
+          data: {type: "FeatureCollection", features: []}
+        });         
+
+        map.current.addSource('route-src', {
+          type: 'geojson',
+          data: {type: "FeatureCollection", features: []}
+        });
+
+        map.current.addSource('route-extension-src', {
+          type: 'geojson',
+          data: {type: "FeatureCollection", features: []}
+        });
+        
+        map.current.addSource('poi-src', {
+          type: 'geojson',
+          data: pois
+        });        
+
+        map.current.addSource('map-plot-src', {
+          'type': 'raster',
+          'url': process.env.NEXT_PUBLIC_MAPBOX_RASTERTILESET
+        });
+
+
+        map.current.addLayer({
+          id: 'map-plot-lyr',
+          type: 'raster',
+          source: 'map-plot-src',
+          minzoom: 0,
+          maxzoom: 22          
+        }); 
+
+        map.current.addLayer({
+          id: 'poi-layer',
+          type: 'symbol',
+          source: 'poi-src',
+          layout: {
+            'icon-allow-overlap': true,
+            'icon-size': 0.5,
+            'icon-image': ['get', 'icon'],
+            'icon-anchor': 'bottom'
+          }
+        });
+
+        map.current.addLayer({
+          id: 'userlocation-layer',
+          type: 'symbol',
+          source: 'userlocation-src',
+          layout: {
+            'icon-image': 'pulsing-dot'
+          }
+        });                      
+
+        map.current.addLayer({
+          id: 'route-layer',
+          type: 'line',
+          source: 'route-src',
+          visibility: 'hidden',
+          layout: {
+            'line-join': 'round'
+          },
+          paint: {
+            'line-width': 5,
+            'line-color': '#000'
+          }
+        });
+        
+        map.current.addLayer({
+          id: 'route-extension-layer',
+          type: 'line',
+          source: 'route-extension-src',
+          visibility: 'hidden',
+          layout: {
+            'line-join': 'round'
+          },
+          paint: {
+            'line-width': 5,
+            'line-color': '#000',
+            'line-dasharray': [1, 2]
+          }
+        });
+        
+        map.current.addLayer({
+          id: 'selectedhouse-layer',
+          type: 'circle',
+          source: 'selectedhouse-src',
+          paint: {
+            'circle-radius': 10,
+            'circle-color': '#FF0000'
+          }
+        });
+        
+        map.current.addLayer({
+          id: 'treasure-location-layer',
+          type: 'symbol',
+          source: 'treasure-location-src',
+          layout: {
+            "icon-image": ["get", "image"],
+            "icon-size": 0.5,
+            'icon-allow-overlap': true          
+          }
+        })        
+        
+        map.current.on("mouseover", "poi-layer", (e) => {
+          map.current.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.current.on("mouseout", "poi-layer", (e) => {
+          map.current.getCanvas().style.cursor = '';
+        });        
+
+        // Add click event
+        map.current.on("click", "poi-layer", (e) => {
+          
+          // Generate a popup component dynamically
+          const poiFeature = {...{type: "Feature"}, ...{properties: {...e.features[0].properties}}, ...{geometry: {...e.features[0].geometry}}}
+          const popupContainer = document.createElement('div');
+          const root = createRoot(popupContainer);
+          root.render(<PoiPopup name={e.features[0].properties.name} poiData={poiFeature} onDirectionButtonPressed={poiRoutingStartHandler}/>);             
+          
+          map.poiPopup
+            .setLngLat(e.features[0].geometry.coordinates)
+            .setDOMContent(popupContainer)
+            .addTo(map.current)            
+        }); 
+
+        map.current.on("click", "selectedhouse-layer", selectedHouseClickHandler);
+
+        map.current.on("click", "treasure-location-layer", onTreasureClicked);
+        
+        setIsMapLoaded(true);
+    }
+
+    // Pulsing dot object
     const pulsingDot = {
       width: markerSize,
       height: markerSize,
@@ -252,6 +445,8 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       }
     }    
 
+    // Hooks
+
     useEffect(() => {
       if(routeShouldRun === false) { return }
       
@@ -299,143 +494,7 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       map.popup = new mapboxgl.Popup({closeButton: false})
       map.poiPopup = new mapboxgl.Popup({closeButton: false, offset: [0, -40]})
 
-      map.current.on('load', () => {
-
-        icons.forEach((icon, index) => {
-          map.current.loadImage(icon.url, (error, image) => {
-            if (error) throw error;
-            if (!map.current.hasImage(icon.name)) {
-              map.current.addImage(icon.name, image);
-            }     
-          })
-        })
-
-        // Add sources and layers
-        map.current.addSource('userlocation-src', {
-          type: 'geojson',
-          data: {type: "FeatureCollection", features: []}
-        })
-
-        map.current.addSource('selectedhouse-src', {
-          type: 'geojson',
-          data: {type: "FeatureCollection", features: []}
-        })        
-
-        map.current.addSource('route-src', {
-          type: 'geojson',
-          data: {type: "FeatureCollection", features: []}
-        }) 
-
-        map.current.addSource('route-extension-src', {
-          type: 'geojson',
-          data: {type: "FeatureCollection", features: []}
-        })
-        
-        map.current.addSource('poi-src', {
-          type: 'geojson',
-          data: pois
-        })        
-
-        map.current.addSource('map-plot-src', {
-          'type': 'raster',
-          'url': process.env.NEXT_PUBLIC_MAPBOX_RASTERTILESET
-        });
-
-
-        map.current.addLayer({
-          id: 'map-plot-lyr',
-          type: 'raster',
-          source: 'map-plot-src',
-          minzoom: 0,
-          maxzoom: 22          
-        }); 
-
-        map.current.addLayer({
-          id: 'poi-layer',
-          type: 'symbol',
-          source: 'poi-src',
-          layout: {
-            'icon-allow-overlap': true,
-            'icon-size': 0.5,
-            'icon-image': ['get', 'icon'],
-            'icon-anchor': 'bottom'
-          }
-        })
-
-        map.current.addLayer({
-          id: 'userlocation-layer',
-          type: 'symbol',
-          source: 'userlocation-src',
-          layout: {
-            'icon-image': 'pulsing-dot'
-          }
-        })                      
-
-        map.current.addLayer({
-          id: 'route-layer',
-          type: 'line',
-          source: 'route-src',
-          visibility: 'hidden',
-          layout: {
-            'line-join': 'round'
-          },
-          paint: {
-            'line-width': 5,
-            'line-color': '#000'
-          }
-        })
-        
-        map.current.addLayer({
-          id: 'route-extension-layer',
-          type: 'line',
-          source: 'route-extension-src',
-          visibility: 'hidden',
-          layout: {
-            'line-join': 'round'
-          },
-          paint: {
-            'line-width': 5,
-            'line-color': '#000',
-            'line-dasharray': [1, 2]
-          }
-        })
-        
-        map.current.addLayer({
-          id: 'selectedhouse-layer',
-          type: 'circle',
-          source: 'selectedhouse-src',
-          paint: {
-            'circle-radius': 10,
-            'circle-color': '#FF0000'
-          }
-        })        
-        
-        map.current.on("mouseover", "poi-layer", (e) => {
-          map.current.getCanvas().style.cursor = 'pointer';
-        })
-
-        map.current.on("mouseout", "poi-layer", (e) => {
-          map.current.getCanvas().style.cursor = '';
-        })        
-
-        // Add click event
-        map.current.on("click", "poi-layer", (e) => {
-          
-          // Generate a popup component dynamically
-          const poiFeature = {...{type: "Feature"}, ...{properties: {...e.features[0].properties}}, ...{geometry: {...e.features[0].geometry}}}
-          const popupContainer = document.createElement('div');
-          const root = createRoot(popupContainer);
-          root.render(<PoiPopup name={e.features[0].properties.name} poiData={poiFeature} onDirectionButtonPressed={poiRoutingStartHandler}/>);             
-          
-          map.poiPopup
-            .setLngLat(e.features[0].geometry.coordinates)
-            .setDOMContent(popupContainer)
-            .addTo(map.current)            
-        }) 
-
-        map.current.on("click", "selectedhouse-layer", selectedHouseClickHandler)
-                
-      })     
+      map.current.on('load', onMapLoadedHandler);
   
     }, []);
 
@@ -508,7 +567,58 @@ const Map = ({openModal, selectedHouse, routeShouldRun, routeVisible, routeDesti
       if(typeof map.current.getSource('userlocation-src') !== 'undefined') {
         map.current.getSource('userlocation-src').setData(generateFeatureCollection(userLocation))
       }
-    }, [userLocation])
+    }, [userLocation]);
+
+    useEffect(() => {
+      if (!map.current) { return; }
+      if (!isMapLoaded || treasureLoading || !Array.isArray(treasures) || treasures.length === 0) { return; }
+      if (typeof map.current.getSource("treasure-location-src") === "undefined") { return; }
+
+      let cancelled = false;
+
+      const loadTreasureMarkers = async () => {
+        try {
+          console.log("Treasure data has been loaded");
+          console.log(treasures);
+
+          await Promise.all(
+            treasures.map((item) =>
+              ensureMapImage(`treasure_${item.treasure_id}`, item.treasure_icon)
+            )
+          );
+
+          if (cancelled || !map.current) { return; }
+
+          console.log(map.current.listImages());
+
+          const featureCollection = {
+            type: "FeatureCollection",
+            features: treasures.map((treasureObj) => ({
+              type: "Feature",
+              properties: {
+                image: `treasure_${treasureObj.treasure_id}`
+              },
+              geometry: {
+                type: "Point",
+                coordinates: [treasureObj.longitude, treasureObj.latitude],
+              },
+            })),
+          };
+
+          map.current.getSource("treasure-location-src").setData(featureCollection);
+        } catch (error) {
+          if (!cancelled) {
+            openModal({ type: "Warning", text: error.message, btnText: "OK" });
+          }
+        }
+      };
+
+      loadTreasureMarkers();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [treasures, isMapLoaded, treasureLoading]);
 
     return (
       <div id="map" className="absolute top-0 left-0 w-full h-full"></div>

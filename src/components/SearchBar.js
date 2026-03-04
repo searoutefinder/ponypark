@@ -114,6 +114,7 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
               bg-white-50
               focus:ring-gray-500
               focus:border-gray-500"
+            autoComplete="off"
             placeholder="Ranch- or Cowboy house..."
             value={query}
             onFocus={hideLegend}
