@@ -628,7 +628,7 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
 
       map.current.flyTo({
         center: [selectedTreasure.longitude, selectedTreasure.latitude],
-        zoom: 15,
+        zoom: 17,
         speed: 1.2,
         curve: 1.42,
         essential: true
