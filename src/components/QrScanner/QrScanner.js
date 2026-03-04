@@ -20,31 +20,10 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
 
   const cameraHandler = async (result) => {
     const data = String(result?.data ?? "").trim();
-    let resolvedData = data;
+    const resolvedData = data;
 
-    setLastScannedValue(data);
-
-    if (/^https?:\/\//i.test(data)) {
-      try {
-        const response = await fetch(data, {
-          method: "GET",
-          redirect: "follow",
-        });
-
-        if (response?.url) {
-          resolvedData = response.url;
-        }
-        else
-        {
-            alert("No URL")
-        }
-      } catch (error) {
-        alert("QR redirect resolution failed:");
-        alert(error);
-      }
-    }
-
-    setLastResolvedValue(resolvedData);
+    alert(JSON.stringify(data));
+    setLastScannedValue(resolvedData);
 
     const match =
       resolvedData.match(/\/treasure\/(\d+)\b/i) ||
@@ -68,7 +47,6 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
 
     setStartError(null);
     setLastScannedValue("");
-    setLastResolvedValue("");
     setScanInfo(null);
 
     const scanner = new QrScanner(video, cameraHandler, {
