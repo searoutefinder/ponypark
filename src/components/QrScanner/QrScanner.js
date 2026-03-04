@@ -39,7 +39,7 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
             alert("No URL")
         }
       } catch (error) {
-        akert("QR redirect resolution failed:");
+        alert("QR redirect resolution failed:");
         alert(error);
       }
     }
