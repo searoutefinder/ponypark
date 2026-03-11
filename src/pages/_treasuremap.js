@@ -155,6 +155,19 @@ export default function TreasureMapPage({mode}) {
     setRouteRequest(true)
   }
 
+  const activateTreasure = useCallback((id) => {
+    if (treasureLoading || treasureError || rows.length === 0) return;
+
+    const match = rows.find((row) => Number(row.treasure_id) === Number(id)) ?? null;
+
+    setTreasureId(Number(id));
+    setTreasureRow(match);
+
+    if (match) {
+      openQuestionModal(match);
+    }
+  }, [rows, treasureLoading, treasureError, openQuestionModal]);
+
   const questionModalCloseHandler = useCallback(() => {
     closeModal()
   }, [closeModal]);
@@ -166,13 +179,18 @@ export default function TreasureMapPage({mode}) {
   const onQrResult = useCallback((id) => {
     setQrOpen(false);
 
-    // URL rewrite without reload
-    router.replace(`/treasuremap/${id}`, undefined, { shallow: true, scroll: false });
+    const currentId = Number(router.query.slug?.[1]);
 
-    // itt indíthatod a kérdéssort is:
-    // loadQuestions(id); 
-    // setQuizOpen(true);
-  }, [router]);
+    if (currentId === Number(id)) {
+      activateTreasure(id);
+      return;
+    }
+
+    router.replace(`/treasuremap/${id}`, undefined, {
+      shallow: true,
+      scroll: false,
+    });
+  }, [router, activateTreasure]);
   
   const treasureClickedHandler = useCallback(() => {
     setQrOpen(true);
@@ -181,6 +199,17 @@ export default function TreasureMapPage({mode}) {
   const closeQrOverlay = useCallback(() => {
     setQrOpen(false);
   }, [])
+
+  const handleQuestionModalClose = useCallback(() => {
+    closeQuestionModal();
+    setTreasureId(null);
+    setTreasureRow(null);
+
+    router.replace("/treasuremap", undefined, {
+      shallow: true,
+      scroll: false,
+    });
+  }, [closeQuestionModal, router]);
 
   // Hooks
 
@@ -262,39 +291,20 @@ export default function TreasureMapPage({mode}) {
   // Read from treasure URL and save results to state
   useEffect(() => {
     if (!router.isReady) return;
+    if (treasureLoading || rows.length === 0) return;
 
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     const match = path.match(/^\/treasuremap\/(\d+)\/?$/);
 
-    if(match === null) { return; }
+  if (!match) {
+    setTreasureId(null);
+    setTreasureRow(null);
+    return;
+  }
 
-    setTreasureId(match ? Number(match[1]) : null);
-  }, [router.isReady, router.asPath]);
+  activateTreasure(Number(match[1]));
+  }, [router.isReady, router.asPath, treasureLoading, rows, activateTreasure]);
 
-  // Monitor changes to treasureId
-  useEffect(() => {
-
-    if(treasureId === null) { 
-      setTreasureRow(null);
-      return 
-    }
-    
-    if (treasureLoading || treasureError) return;
-
-    const match = rows.find((row) => Number(row.treasure_id) === Number(treasureId));
-    
-    // Copy the data for the matched row into the treasureRow state variable
-    setTreasureRow(match ?? null);
-
-  }, [treasureId, rows, treasureLoading, treasureError]);
-
-  // Monitor changes to treasureRow, the state value that holds the full details for a given treasure
-  useEffect(() => {
-    if (!treasureRow) return;
-
-    console.log("Aktuális treasure:", treasureRow); 
-    openQuestionModal(treasureRow);
-  }, [treasureRow]);
 
   return (
     <div className="relative h-screen w-full">
@@ -356,11 +366,11 @@ export default function TreasureMapPage({mode}) {
       }
 
       {
-        (isQuestionModalShown === true) ? 
+        isQuestionModalShown && treasureRow ? 
           <QuestionModal
             data={treasureRow} 
             buttonText={"Close"}
-            onButtonClick={closeQuestionModal}
+            onButtonClick={handleQuestionModalClose}
           /> 
           : ''
       }

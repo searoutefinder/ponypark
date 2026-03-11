@@ -46,7 +46,6 @@ export function AppUiProvider({ children }) {
   const closeQuestionModal = () => {
     setIsLoading(false);
     setIsQuestionModalShown(false);
-    setQuestionModalData(null);
   };  
 
   const value = useMemo(
