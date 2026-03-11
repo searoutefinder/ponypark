@@ -6,6 +6,7 @@ const TREASURE_CSV_URL = process.env.NEXT_PUBLIC_TREASURE_SHEET;
 const TreasureDataContext = createContext({
   rows: [],
   loading: true,
+  loaded: false,
   error: null,
   reload: async () => {},
 });

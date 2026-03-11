@@ -7,13 +7,14 @@ import pois from '../data/pois.json'
 import icons from '../data/icons.json'
 import HousePopup from './HousePopup/HousePopup'
 import PoiPopup from './PoiPopup/PoiPopup'
+import TreasurePopup from './TreasurePopup/TreasurePopup'
 import { useAppUi } from '../context/AppUiContext';
 import { useTreasureData } from "../context/TreasureDataContext";
 import { m } from 'framer-motion';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
-const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, shouldGeolocate, onGeolocationFinish, onPoiSelected, filters, userLocation, treasures}) => {
+const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun, routeVisible, routeDestination, onRouteDestinationSelected, onRoutingStart, onRoutingFinish, shouldGeolocate, onGeolocationFinish, onPoiSelected, filters, userLocation, treasures}) => {
     
     const [markerSize, setMarkerSize] = useState(150);
     const { setLoading, openModal, isMapLoaded, setIsMapLoaded } = useAppUi();
@@ -36,9 +37,7 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
     }
 
     const displayRoute = async (origin, destination) => {
-      
-      //origin = [6.598693055084427, 52.59152994287401]
-      
+            
       try {
         setLoading(true);
 
@@ -129,7 +128,7 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
         bounds.extend(point)
       })
 
-      map.current.fitBounds(bounds, {padding: {top: 50, bottom:50, left: 50, right: 50}})        
+      map.current.fitBounds(bounds, {padding: {top: 150, bottom: 150, left: 150, right: 150}})        
     }
 
     const zoomToCurrentPosition = () => {
@@ -221,6 +220,7 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
 
     const onMapLoadedHandler = () => {
         
+        // Load all the local icons 
         icons.forEach((icon, index) => {
           map.current.loadImage(icon.url, (error, image) => {
             if (error) throw error;
@@ -241,10 +241,12 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
           data: {type: "FeatureCollection", features: []}
         }); 
         
-        map.current.addSource('treasure-location-src', {
-          type: 'geojson',
-          data: {type: "FeatureCollection", features: []}
-        });         
+        if(mode === "treasure") {
+          map.current.addSource('treasure-location-src', {
+            type: 'geojson',
+            data: {type: "FeatureCollection", features: []}
+          });         
+        }
 
         map.current.addSource('route-src', {
           type: 'geojson',
@@ -256,10 +258,12 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
           data: {type: "FeatureCollection", features: []}
         });
         
-        map.current.addSource('poi-src', {
-          type: 'geojson',
-          data: pois
-        });        
+        if(mode === "normal") {
+          map.current.addSource('poi-src', {
+            type: 'geojson',
+            data: pois
+          }); 
+        }
 
         map.current.addSource('map-plot-src', {
           'type': 'raster',
@@ -275,17 +279,19 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
           maxzoom: 22          
         }); 
 
-        map.current.addLayer({
-          id: 'poi-layer',
-          type: 'symbol',
-          source: 'poi-src',
-          layout: {
-            'icon-allow-overlap': true,
-            'icon-size': 0.5,
-            'icon-image': ['get', 'icon'],
-            'icon-anchor': 'bottom'
-          }
-        });
+        if(mode === "normal") {
+          map.current.addLayer({
+            id: 'poi-layer',
+            type: 'symbol',
+            source: 'poi-src',
+            layout: {
+              'icon-allow-overlap': true,
+              'icon-size': 0.5,
+              'icon-image': ['get', 'icon'],
+              'icon-anchor': 'bottom'
+            }
+          });
+        }
 
         map.current.addLayer({
           id: 'userlocation-layer',
@@ -335,45 +341,78 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
           }
         });
         
-        map.current.addLayer({
-          id: 'treasure-location-layer',
-          type: 'symbol',
-          source: 'treasure-location-src',
-          layout: {
-            "icon-image": ["get", "image"],
-            "icon-size": 0.5,
-            'icon-allow-overlap': true          
-          }
-        })        
+        if(mode === "treasure") {
+          map.current.addLayer({
+            id: 'treasure-location-layer',
+            type: 'symbol',
+            source: 'treasure-location-src',
+            layout: {
+              "icon-image": ["get", "image"],
+              "icon-size": 0.5,
+              'icon-allow-overlap': true          
+            }
+          });
+        }       
         
-        map.current.on("mouseover", "poi-layer", (e) => {
-          map.current.getCanvas().style.cursor = 'pointer';
-        });
+        if(mode === "normal") {
+          map.current.on("mouseover", "poi-layer", (e) => {
+            map.current.getCanvas().style.cursor = 'pointer';
+          });
 
-        map.current.on("mouseout", "poi-layer", (e) => {
-          map.current.getCanvas().style.cursor = '';
-        });        
-
-        // Add click event
-        map.current.on("click", "poi-layer", (e) => {
-          
-          // Generate a popup component dynamically
-          const poiFeature = {...{type: "Feature"}, ...{properties: {...e.features[0].properties}}, ...{geometry: {...e.features[0].geometry}}}
-          const popupContainer = document.createElement('div');
-          const root = createRoot(popupContainer);
-          root.render(<PoiPopup name={e.features[0].properties.name} poiData={poiFeature} onDirectionButtonPressed={poiRoutingStartHandler}/>);             
-          
-          map.poiPopup
-            .setLngLat(e.features[0].geometry.coordinates)
-            .setDOMContent(popupContainer)
-            .addTo(map.current)            
-        }); 
+          map.current.on("mouseout", "poi-layer", (e) => {
+            map.current.getCanvas().style.cursor = '';
+          }); 
+                    
+          map.current.on("click", "poi-layer", onPoiClickedHandler);
+        } 
 
         map.current.on("click", "selectedhouse-layer", selectedHouseClickHandler);
 
-        map.current.on("click", "treasure-location-layer", onTreasureClicked);
-        
+        map.current.on("click", "treasure-location-layer", onTreasureClickedHandler);
+
+        map.current.on("click", (e) => {
+          map.current.getSource('route-src')
+          .setData({
+            type: 'FeatureCollection',
+            features: []
+          });
+          map.current.getSource('route-extension-src')
+          .setData({
+            type: 'FeatureCollection',
+            features: []
+          });          
+        });
+
         setIsMapLoaded(true);
+
+    }
+    
+    const onPoiClickedHandler = (e) => {            
+      // Generate a popup component dynamically
+      const poiFeature = {...{type: "Feature"}, ...{properties: {...e.features[0].properties}}, ...{geometry: {...e.features[0].geometry}}}
+      const popupContainer = document.createElement('div');
+      const root = createRoot(popupContainer);
+      root.render(<PoiPopup name={e.features[0].properties.name} poiData={poiFeature} onDirectionButtonPressed={poiRoutingStartHandler}/>);             
+            
+      map.poiPopup
+        .setLngLat(e.features[0].geometry.coordinates)
+        .setDOMContent(popupContainer)
+        .addTo(map.current);
+    }
+
+    const onTreasureClickedHandler = (e) => {
+      const popupContainer = document.createElement('div');
+      const root = createRoot(popupContainer);
+      root.render(<TreasurePopup 
+        treasureData={{lnglat: e.features[0].geometry.coordinates}}
+        onQrClick={onTreasureClicked}
+        onDirections={onTreasureRouting}
+      />);                   
+
+      map.treasurePopup
+        .setLngLat(e.features[0].geometry.coordinates)
+        .setDOMContent(popupContainer)
+        .addTo(map.current)      
     }
 
     // Pulsing dot object
@@ -448,6 +487,10 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
     // Hooks
 
     useEffect(() => {
+      console.log(mode);
+    }, [mode]);
+
+    useEffect(() => {
       if(routeShouldRun === false) { return }
       
       // Render the route between the two points
@@ -484,15 +527,19 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
             }
           ]
         },
-        center: [process.env.NEXT_PUBLIC_MAPBOX_CENTER_LNG, process.env.NEXT_PUBLIC_MAPBOX_CENTER_LAT],
+        center: [
+          process.env.NEXT_PUBLIC_MAPBOX_CENTER_LNG,
+          process.env.NEXT_PUBLIC_MAPBOX_CENTER_LAT
+        ],
         zoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM,
         minZoom: process.env.NEXT_PUBLIC_MAPBOX_ZOOM
       });
 
       map.current.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
 
-      map.popup = new mapboxgl.Popup({closeButton: false})
-      map.poiPopup = new mapboxgl.Popup({closeButton: false, offset: [0, -40]})
+      map.popup = new mapboxgl.Popup({closeButton: false, className: 'house-popup'});
+      map.poiPopup = new mapboxgl.Popup({closeButton: false, offset: [0, -40], className: 'poi-popup', maxWidth: '300px'});
+      map.treasurePopup = new mapboxgl.Popup({closeButton: false, offset: [0, -15], className: 'treasure-popup', maxWidth: '180px'});
 
       map.current.on('load', onMapLoadedHandler);
   
@@ -574,6 +621,8 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
       if (!isMapLoaded || treasureLoading || !Array.isArray(treasures) || treasures.length === 0) { return; }
       if (typeof map.current.getSource("treasure-location-src") === "undefined") { return; }
 
+      console.log(treasures);
+
       let cancelled = false;
 
       const loadTreasureMarkers = async () => {
@@ -589,7 +638,7 @@ const Map = ({selectedTreasure, onTreasureClicked, selectedHouse, routeShouldRun
 
           if (cancelled || !map.current) { return; }
 
-          console.log(map.current.listImages());
+          //console.log(map.current.listImages());
 
           const featureCollection = {
             type: "FeatureCollection",

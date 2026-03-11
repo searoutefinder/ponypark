@@ -6,16 +6,21 @@ import Map from '../components/Map'
 import SearchBar from '../components/SearchBar';
 import LoaderScreen from '../components/LoaderScreen';
 import Modal from '../components/Modal';
+import QuestionModal from '../components/QuestionModal/QuestionModal';
+import QrScannerOverlay from "../components/QrScanner/QrScanner";
 
 // Context
 import { useAppUi } from "../context/AppUiContext";
 import { useTreasureData } from "../context/TreasureDataContext";
 
 
-export default function Home({mode}) {
+export default function TreasureMapPage() {
+  
+  // Router and URL parsing
   const router = useRouter();
   const { destination } = router.query;
 
+  // State
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [selectedPoi, setSelectedPoi] = useState(null);
 
@@ -26,25 +31,43 @@ export default function Home({mode}) {
   const [filterCategories, setFilterCategories] = useState([]);
   const [location, setLocation] = useState(null);
 
-  // Új state-ek
   const [treasureId, setTreasureId] = useState(null);
   const [treasureRow, setTreasureRow] = useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
 
-  // Treasure data state
+  // Context
   const { rows, loading: treasureLoading, error: treasureError } = useTreasureData();
-  const { isLoading, isModalShown, modalData, setLoading, openModal, closeModal } = useAppUi();  
+  const { 
+    isLoading,
+    isModalShown,
+    isQuestionModalShown,
+    modalData,
+    setLoading,
+    openModal,
+    closeModal,
+    openQuestionModal,
+    closeQuestionModal
+  } = useAppUi();  
   
-
+  // Handlers
 
   // POI has been selected by click using the map
   const poiSelectedHandler = (data) => {
     
-    setSelectedPoi(data);
-    setRouteDestination(data);
+    setSelectedPoi(data)
+    setRouteDestination(data)
     
     //Signal to the map component that it should perform a routing operation
     setRouteRequest(true)    
   }
+
+  const treasureRoutingSelectedHandler = (data) => {
+    
+    setRouteDestination(data);
+    
+    //Signal to the map component that it should perform a routing operation
+    setRouteRequest(true);
+  }  
 
   // House has been selected using the search bar
   const searchBarSuggestionSelected = (feature) => {
@@ -126,9 +149,32 @@ export default function Home({mode}) {
     setRouteRequest(true)
   }
 
-  const modalCloseHandler = useCallback(() => {
+  const questionModalCloseHandler = useCallback(() => {
     closeModal()
   }, [closeModal]);
+
+  const modalCloseHandler = useCallback(() => {
+    closeModal()
+  }, [closeModal])
+
+  const onQrResult = useCallback((id) => {
+    setQrOpen(false);
+
+    // URL rewrite without reload
+    router.replace(`/treasuremap/${id}`, undefined, { shallow: true, scroll: false });
+
+    // itt indíthatod a kérdéssort is:
+    // loadQuestions(id); 
+    // setQuizOpen(true);
+  }, [router]);
+  
+  const treasureClickedHandler = useCallback(() => {
+    setQrOpen(true);
+  }, [])
+
+  const closeQrOverlay = useCallback(() => {
+    setQrOpen(false);
+  }, [])
 
   // Hooks
 
@@ -201,6 +247,43 @@ export default function Home({mode}) {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
+  // Read from treasure URL and save results to state
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const match = path.match(/^\/treasuremap\/(\d+)\/?$/);
+
+    if(match === null) { return; }
+
+    setTreasureId(match ? Number(match[1]) : null);
+  }, [router.isReady, router.asPath]);
+
+  // Monitor changes to treasureId
+  useEffect(() => {
+
+    if(treasureId === null) { 
+      setTreasureRow(null);
+      return 
+    }
+    
+    if (treasureLoading || treasureError) return;
+
+    const match = rows.find((row) => Number(row.treasure_id) === Number(treasureId));
+    
+    // Copy the data for the matched row into the treasureRow state variable
+    setTreasureRow(match ?? null);
+
+  }, [treasureId, rows, treasureLoading, treasureError]);
+
+  // Monitor changes to treasureRow, the state value that holds the full details for a given treasure
+  useEffect(() => {
+    if (!treasureRow) return;
+
+    console.log("Aktuális treasure:", treasureRow); 
+    openQuestionModal(treasureRow);
+  }, [treasureRow]);
+
   return (
     <div className="relative h-screen w-full">
       <Head>
@@ -210,7 +293,7 @@ export default function Home({mode}) {
         <meta property="og:description" content="Interactive map of PonyparkCity" />
       </Head>      
       <Map
-        mode={"normal"}
+        mode={"treasure"}
         selectedHouse={selectedHouse}
         routeShouldRun={routeRequest}
         routeVisible={routeVisible}
@@ -223,27 +306,50 @@ export default function Home({mode}) {
         onGeolocationFinish={geolocateRequestReset}
         onRouteDestinationSelected={routeDestinationSelectedHandler}
         onPoiSelected={poiSelectedHandler}
-        onTreasureRouting={null}
-        treasures={null}
-        selectedTreasure={null}
-        onTreasureClicked={null}
+        onTreasureRouting={treasureRoutingSelectedHandler}
+        treasures={rows}
+        selectedTreasure={treasureRow}
+        onTreasureClicked={treasureClickedHandler}
       />
       <SearchBar
-        isLegendButtonVisible={true}
+        isLegendButtonVisible={false}
         destination={destination}
         onSuggestionSelected={searchBarSuggestionSelected}
         onQueryCancel={searchBarQueryCanceled}
         onFilterChange={filtersChangeHandler}
         onGeolocationRequested={geolocateUser}
       />
+      <QrScannerOverlay
+        open={qrOpen}
+        onClose={closeQrOverlay}
+        onResult={onQrResult}
+      />
+
+
 
       {isLoading ?
         <LoaderScreen />
         : ''
       }
+
       {(isModalShown && modalData !== null) ?
-        <Modal messageType={modalData.type} messageText={modalData.text} buttonText={modalData.btnText} onButtonClick={modalCloseHandler}/>     
+        <Modal
+          messageType={modalData.type}
+          messageText={modalData.text}
+          buttonText={modalData.btnText}
+          onButtonClick={modalCloseHandler}
+        />     
         : ''
+      }
+
+      {
+        (isQuestionModalShown === true) ? 
+          <QuestionModal
+            data={treasureRow} 
+            buttonText={"Close"}
+            onButtonClick={closeQuestionModal}
+          /> 
+          : ''
       }
     </div>
   );

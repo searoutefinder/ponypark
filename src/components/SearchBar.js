@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
-import { XCircleIcon, MapPinIcon, MapIcon } from "@heroicons/react/24/solid";
-import { MapIcon as MapIconOutline } from "@heroicons/react/24/outline";
+import { XCircleIcon, MapPinIcon, MapIcon, GiftIcon } from "@heroicons/react/24/solid";
+import { MapIcon as MapIconOutline, GiftIcon as GiftIconOutline, MapPinIcon as MapPinIconOutline } from "@heroicons/react/24/outline";
 import houseData from '../data/houses.json'
 import icons from '../data/icons.json'
 import LegendItem from './LegendItem'
 
-const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterChange, onGeolocationRequested}) => {
+const SearchBar = ({isLegendButtonVisible, destination, onSuggestionSelected, onQueryCancel, onFilterChange, onGeolocationRequested}) => {
   const [query, setQuery] = useState("");
   const [houses, setHouses] = useState({ name: null, feature: null })
   const [showSuggestions, setShowSuggestions] = useState(false); 
@@ -100,11 +100,11 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
           <input 
             type="search" 
             id="default-search" 
-            className="
+            className={`
               block
               w-full
               p-4
-              pr-[9em]
+              ${ isLegendButtonVisible ? ' pr-[9em] ' : ' pr-[6.75em] '}
               ps-10
               text-sm
               text-gray-600
@@ -113,7 +113,7 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
               rounded-lg
               bg-white-50
               focus:ring-gray-500
-              focus:border-gray-500"
+              focus:border-gray-500`}
             autoComplete="off"
             placeholder="Ranch- or Cowboy house..."
             value={query}
@@ -124,69 +124,33 @@ const SearchBar = ({destination, onSuggestionSelected, onQueryCancel, onFilterCh
             }}
             required 
           />
-          {/* Clear (X) button */}
-          {query && (
-            <button
-              onClick={handleClear}
-              className="text-gray-600
-              absolute
-              end-[5.5rem]
-              bottom-2.5
-              bg-white-700
-              hover:bg-white-800
-              focus:ring-4
-              focus:outline-none
-              focus:ring-gray-300
-              font-medium
-              rounded-lg
-              text-sm
-              pr-2
-              pl-2
-              pt-2
-              pb-2"              
-            >
-              <XCircleIcon className="w-5 h-5" />
+          <div className="absolute inset-y-0 right-3 flex items-center gap-3">
+
+            {query && (
+              <button onClick={handleClear} className="icon-btn">
+                <XCircleIcon className="w-5 h-5" />
+              </button>
+            )}
+
+            <button onClick={handleGeolocate} className="icon-btn">
+              <MapPinIconOutline className="w-5 h-5" />
             </button>
-          )}
 
-          <button
-              onClick={handleGeolocate}
-              className="text-gray-600
-              absolute
-              end-[3.25rem]
-              bottom-2.5
-              bg-white-700
-              hover:bg-white-800
-              focus:ring-4
-              focus:outline-none
-              focus:ring-gray-300
-              font-medium
-              rounded-lg
-              text-sm
-              pr-2
-              pl-2
-              pt-2
-              pb-2"              
-            >
+            {isLegendButtonVisible && (
+              <button onClick={toggleLegend} className="icon-btn">
+                {showLegend ? (
+                  <MapIcon className="w-5 h-5" />
+                ) : (
+                  <MapIconOutline className="w-5 h-5" />
+                )}
+              </button>
+            )}
 
-            <MapPinIcon className="w-5 h-5 text-gray-600" />              
-          </button>
+            <button onClick={() => {}} className="icon-btn">
+              <GiftIconOutline className="w-5 h-5" />
+            </button>
 
-          <button
-            onClick={toggleLegend} 
-            className="text-gray-600 absolute end-[0.75rem] bottom-2.5 bg-white-700 hover:bg-white-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm pr-2
-              pl-2
-              pt-2
-              pb-2 dark:bg-white-600 dark:hover:bg-white-700"
-              title="Open legend"
-              >
-            {showLegend ? 
-              <MapIcon className="w-5 h-5 text-gray-600" /> 
-            :              
-              <MapIconOutline className="w-5 h-5 text-gray-600" />
-            }
-            
-          </button>          
+          </div>
 
         </div>                 
 

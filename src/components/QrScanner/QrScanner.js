@@ -7,7 +7,6 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
   const onCloseRef = useRef(onClose);
   const onResultRef = useRef(onResult);
   const [startError, setStartError] = useState(null);
-  const [lastScannedValue, setLastScannedValue] = useState("");
   const [scanInfo, setScanInfo] = useState(null);
 
   useEffect(() => {
@@ -22,11 +21,9 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
     const data = String(result?.data ?? "").trim();
     const resolvedData = data;
 
-    setLastScannedValue(resolvedData);
-
     const match =
-      resolvedData.match(/\/treasure\/(\d+)\b/i) ||
-      resolvedData.match(/^treasure:(\d+)$/i) ||
+      resolvedData.match(/\/treasuremap\/(\d+)\b/i) ||
+      resolvedData.match(/^treasuremap:(\d+)$/i) ||
       resolvedData.match(/^(\d+)$/);
 
     if (match) {
@@ -35,7 +32,7 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
       return;
     }
 
-    setScanInfo("QR kod felismerve, de a tartalom nem tamogatott formatumu.");
+    setScanInfo("QR has been recognized, but the content is not supported.");
   };
 
   useEffect(() => {
@@ -45,7 +42,6 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
     if (!video) return;
 
     setStartError(null);
-    setLastScannedValue("");
     setScanInfo(null);
 
     const scanner = new QrScanner(video, cameraHandler, {
@@ -95,18 +91,12 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
       </div>
 
       <div className="p-3 text-white/80 text-sm text-center">
-        {startError ?? "Iranyitsd a kamerat a QR kodra."}
+        {startError ?? "Direct your camera on the QR code!."}
       </div>
 
       {!startError && scanInfo ? (
         <div className="px-3 pb-2 text-xs text-yellow-300 text-center">
           {scanInfo}
-        </div>
-      ) : null}
-
-      {!startError && lastScannedValue ? (
-        <div className="px-3 pb-3 text-xs text-white/60 text-center break-all">
-          Utolso beolvasott ertek: {lastScannedValue}
         </div>
       ) : null}
     </div>
