@@ -106,7 +106,7 @@ const SearchBar = ({isLegendButtonVisible, destination, onSuggestionSelected, on
               p-4
               ${ isLegendButtonVisible ? ' pr-[9em] ' : ' pr-[6.75em] '}
               ps-10
-              text-sm
+              text-[16px]
               text-gray-600
               border
               border-white-300

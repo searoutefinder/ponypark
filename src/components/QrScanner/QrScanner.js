@@ -21,10 +21,14 @@ const QrScannerOverlay = ({ open, onClose, onResult }) => {
     const data = String(result?.data ?? "").trim();
     const resolvedData = data;
 
+    console.log(data);
+
     const match =
       resolvedData.match(/\/treasuremap\/(\d+)\b/i) ||
       resolvedData.match(/^treasuremap:(\d+)$/i) ||
       resolvedData.match(/^(\d+)$/);
+
+      console.log(match);
 
     if (match) {
       setScanInfo(null);
