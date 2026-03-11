@@ -201,6 +201,10 @@ export default function Home({mode}) {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
+  useEffect(() => {
+    console.log(rows);
+  }, [rows]);
+
   return (
     <div className="relative h-screen w-full">
       <Head>
@@ -210,7 +214,7 @@ export default function Home({mode}) {
         <meta property="og:description" content="Interactive map of PonyparkCity" />
       </Head>      
       <Map
-        mode={"normal"}
+        mode={mode}
         selectedHouse={selectedHouse}
         routeShouldRun={routeRequest}
         routeVisible={routeVisible}
@@ -224,11 +228,12 @@ export default function Home({mode}) {
         onRouteDestinationSelected={routeDestinationSelectedHandler}
         onPoiSelected={poiSelectedHandler}
         onTreasureRouting={null}
-        treasures={null}
+        treasures={rows}
         selectedTreasure={null}
         onTreasureClicked={null}
       />
       <SearchBar
+        mode={mode}
         isLegendButtonVisible={true}
         destination={destination}
         onSuggestionSelected={searchBarSuggestionSelected}

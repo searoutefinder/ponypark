@@ -29,6 +29,7 @@ function parseCsv(text) {
 export function TreasureDataProvider({ children }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null);
 
   const loadRows = async () => {
@@ -44,8 +45,9 @@ export function TreasureDataProvider({ children }) {
 
       const csvText = await response.text();
       const csvData = parseCsv(csvText);
-      
+
       setRows(csvData);
+      setLoaded(true);
     } catch (loadError) {
       setError(loadError);
     } finally {
@@ -57,11 +59,20 @@ export function TreasureDataProvider({ children }) {
     loadRows();
   }, []);
 
+  if (loading) {
+    return <div className="w-screen h-screen flex justify-center items-center"><span>Loading treasure data...</span></div>;
+  }
+
+  if (error) {
+    return <div className="w-screen h-screen flex justify-center items-center"><span>Error loading data...</span></div>;;
+  }  
+
   return (
     <TreasureDataContext.Provider
       value={{
         rows,
         loading,
+        loaded,
         error,
         reload: loadRows,
       }}

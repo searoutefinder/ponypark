@@ -14,7 +14,7 @@ import { useAppUi } from "../context/AppUiContext";
 import { useTreasureData } from "../context/TreasureDataContext";
 
 
-export default function TreasureMapPage() {
+export default function TreasureMapPage({mode}) {
   
   // Router and URL parsing
   const router = useRouter();
@@ -36,7 +36,13 @@ export default function TreasureMapPage() {
   const [qrOpen, setQrOpen] = useState(false);
 
   // Context
-  const { rows, loading: treasureLoading, error: treasureError } = useTreasureData();
+  const { 
+    rows,
+    loading: treasureLoading, 
+    loaded: treasureLoaded, 
+    error: treasureError 
+  } = useTreasureData();
+
   const { 
     isLoading,
     isModalShown,
@@ -178,6 +184,12 @@ export default function TreasureMapPage() {
 
   // Hooks
 
+  useEffect(() => {
+    if(treasureLoaded === false || rows.length === 0) { return; }
+    console.log(`Treasure rows have been loaded`);
+    console.log(rows);
+  }, [treasureLoaded, rows]);
+
   // Geolocation
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -293,7 +305,7 @@ export default function TreasureMapPage() {
         <meta property="og:description" content="Interactive map of PonyparkCity" />
       </Head>      
       <Map
-        mode={"treasure"}
+        mode={mode}
         selectedHouse={selectedHouse}
         routeShouldRun={routeRequest}
         routeVisible={routeVisible}
@@ -312,6 +324,7 @@ export default function TreasureMapPage() {
         onTreasureClicked={treasureClickedHandler}
       />
       <SearchBar
+        mode={mode}
         isLegendButtonVisible={false}
         destination={destination}
         onSuggestionSelected={searchBarSuggestionSelected}

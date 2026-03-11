@@ -18,7 +18,7 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
     
     const [markerSize, setMarkerSize] = useState(150);
     const { setLoading, openModal, isMapLoaded, setIsMapLoaded } = useAppUi();
-    const { rows, loading: treasureLoading, error: treasureError } = useTreasureData();
+    const { rows, loaded: treasureLoaded, loading: treasureLoading, error: treasureError } = useTreasureData();
 
     const map = useRef(null);
     const selectedHouseRef = useRef(selectedHouse);
@@ -218,7 +218,7 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
       });
     }
 
-    const onMapLoadedHandler = () => {
+    const onMapLoadedHandler = async () => {
         
         // Load all the local icons 
         icons.forEach((icon, index) => {
@@ -240,13 +240,33 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
           type: 'geojson',
           data: {type: "FeatureCollection", features: []}
         }); 
-        
-        if(mode === "treasure") {
-          map.current.addSource('treasure-location-src', {
-            type: 'geojson',
-            data: {type: "FeatureCollection", features: []}
-          });         
-        }
+                
+        console.log("Adding treasure source", rows);
+
+        await Promise.all(
+          rows.map((item) =>
+            ensureMapImage(`treasure_${item.treasure_id}`, item.treasure_icon)
+          )
+        );
+
+        const featureCollection = {
+            type: "FeatureCollection",
+            features: rows.map((treasureObj) => ({
+              type: "Feature",
+              properties: {
+                image: `treasure_${treasureObj.treasure_id}`
+              },
+              geometry: {
+                type: "Point",
+                coordinates: [treasureObj.longitude, treasureObj.latitude],
+              },
+            })),
+        };   
+                 
+        map.current.addSource('treasure-location-src', {
+          type: 'geojson',
+          data: featureCollection
+        });
 
         map.current.addSource('route-src', {
           type: 'geojson',
@@ -258,12 +278,10 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
           data: {type: "FeatureCollection", features: []}
         });
         
-        if(mode === "normal") {
-          map.current.addSource('poi-src', {
-            type: 'geojson',
-            data: pois
-          }); 
-        }
+        map.current.addSource('poi-src', {
+          type: 'geojson',
+          data: pois
+        }); 
 
         map.current.addSource('map-plot-src', {
           'type': 'raster',
@@ -279,19 +297,18 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
           maxzoom: 22          
         }); 
 
-        if(mode === "normal") {
-          map.current.addLayer({
-            id: 'poi-layer',
-            type: 'symbol',
-            source: 'poi-src',
-            layout: {
-              'icon-allow-overlap': true,
-              'icon-size': 0.5,
-              'icon-image': ['get', 'icon'],
-              'icon-anchor': 'bottom'
-            }
-          });
-        }
+        map.current.addLayer({
+          id: 'poi-layer',
+          type: 'symbol',
+          source: 'poi-src',
+          layout: {
+            'icon-allow-overlap': true,
+            'icon-size': 0.5,
+            'icon-image': ['get', 'icon'],
+            'icon-anchor': 'bottom',
+            'visibility': (mode === "normal") ? "visible" : "none"
+          }
+        });
 
         map.current.addLayer({
           id: 'userlocation-layer',
@@ -341,30 +358,27 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
           }
         });
         
-        if(mode === "treasure") {
-          map.current.addLayer({
-            id: 'treasure-location-layer',
-            type: 'symbol',
-            source: 'treasure-location-src',
-            layout: {
-              "icon-image": ["get", "image"],
-              "icon-size": 0.5,
-              'icon-allow-overlap': true          
-            }
-          });
-        }       
+        map.current.addLayer({
+          id: 'treasure-location-layer',
+          type: 'symbol',
+          source: 'treasure-location-src',
+          layout: {
+            visibility: (mode === "treasure") ? "visible" : "none",
+            "icon-image": ["get", "image"],
+            "icon-size": 0.5,
+            "icon-allow-overlap": true
+          }
+        });    
         
-        if(mode === "normal") {
-          map.current.on("mouseover", "poi-layer", (e) => {
-            map.current.getCanvas().style.cursor = 'pointer';
-          });
+        map.current.on("mouseover", "poi-layer", (e) => {
+          map.current.getCanvas().style.cursor = 'pointer';
+        });
 
-          map.current.on("mouseout", "poi-layer", (e) => {
-            map.current.getCanvas().style.cursor = '';
-          }); 
+        map.current.on("mouseout", "poi-layer", (e) => {
+          map.current.getCanvas().style.cursor = '';
+        }); 
                     
-          map.current.on("click", "poi-layer", onPoiClickedHandler);
-        } 
+        map.current.on("click", "poi-layer", onPoiClickedHandler);
 
         map.current.on("click", "selectedhouse-layer", selectedHouseClickHandler);
 
@@ -488,7 +502,7 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
 
     useEffect(() => {
       console.log(mode);
-    }, [mode]);
+    }, [mode])
 
     useEffect(() => {
       if(routeShouldRun === false) { return }
@@ -616,19 +630,16 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
       }
     }, [userLocation]);
 
-    useEffect(() => {
+    /*useEffect(() => {
       if (!map.current) { return; }
+      if(mode === "normal") { return; }
       if (!isMapLoaded || treasureLoading || !Array.isArray(treasures) || treasures.length === 0) { return; }
       if (typeof map.current.getSource("treasure-location-src") === "undefined") { return; }
-
-      console.log(treasures);
 
       let cancelled = false;
 
       const loadTreasureMarkers = async () => {
         try {
-          console.log("Treasure data has been loaded");
-          console.log(treasures);
 
           await Promise.all(
             treasures.map((item) =>
@@ -662,12 +673,13 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
         }
       };
 
+      console.log("Treasure hook in map");
       loadTreasureMarkers();
 
       return () => {
         cancelled = true;
       };
-    }, [treasures, isMapLoaded, treasureLoading]);
+    }, [treasures, treasureLoaded, isMapLoaded, treasureLoading]);*/
 
     useEffect(() => {
       if(selectedTreasure === null) { return; }

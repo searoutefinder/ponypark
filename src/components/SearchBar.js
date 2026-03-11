@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { XCircleIcon, MapPinIcon, MapIcon, GiftIcon } from "@heroicons/react/24/solid";
 import { MapIcon as MapIconOutline, GiftIcon as GiftIconOutline, MapPinIcon as MapPinIconOutline } from "@heroicons/react/24/outline";
@@ -7,7 +8,10 @@ import houseData from '../data/houses.json'
 import icons from '../data/icons.json'
 import LegendItem from './LegendItem'
 
-const SearchBar = ({isLegendButtonVisible, destination, onSuggestionSelected, onQueryCancel, onFilterChange, onGeolocationRequested}) => {
+const SearchBar = ({mode, isLegendButtonVisible, destination, onSuggestionSelected, onQueryCancel, onFilterChange, onGeolocationRequested}) => {
+  
+  const router = useRouter();
+  
   const [query, setQuery] = useState("");
   const [houses, setHouses] = useState({ name: null, feature: null })
   const [showSuggestions, setShowSuggestions] = useState(false); 
@@ -54,6 +58,18 @@ const SearchBar = ({isLegendButtonVisible, destination, onSuggestionSelected, on
 
   const hideLegend = () => {
     setShowLegend(false)
+  }
+
+  const redirectToTreasureMap = () => {
+    const { slug } = router.query;
+    if(typeof slug === "undefined") {
+      // Azt jelenti hogy a rootban vagyunk
+      router.replace("/treasuremap");
+    }
+    else if(slug.length > 0)
+    {
+      router.replace("/");
+    }
   }
 
   useEffect(() => {
@@ -145,10 +161,15 @@ const SearchBar = ({isLegendButtonVisible, destination, onSuggestionSelected, on
                 )}
               </button>
             )}
-
-            <button onClick={() => {}} className="icon-btn">
-              <GiftIconOutline className="w-5 h-5" />
-            </button>
+            {mode === "normal" ?
+              <button onClick={redirectToTreasureMap} className="icon-btn" title="Park map">
+                <GiftIconOutline className="w-5 h-5" />
+              </button>
+            :
+              <button onClick={redirectToTreasureMap} className="icon-btn" title="Treasure map">
+                <GiftIcon className="w-5 h-5" />
+              </button>  
+            }          
 
           </div>
 
