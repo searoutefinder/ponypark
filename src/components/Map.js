@@ -308,16 +308,7 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
             'icon-anchor': 'bottom',
             'visibility': (mode === "normal") ? "visible" : "none"
           }
-        });
-
-        map.current.addLayer({
-          id: 'userlocation-layer',
-          type: 'symbol',
-          source: 'userlocation-src',
-          layout: {
-            'icon-image': 'pulsing-dot'
-          }
-        });                      
+        });                    
 
         map.current.addLayer({
           id: 'route-layer',
@@ -368,7 +359,16 @@ const Map = ({onTreasureRouting, mode, selectedTreasure, onTreasureClicked, sele
             "icon-size": 0.5,
             "icon-allow-overlap": true
           }
-        });    
+        });  
+        
+        map.current.addLayer({
+          id: 'userlocation-layer',
+          type: 'symbol',
+          source: 'userlocation-src',
+          layout: {
+            'icon-image': 'pulsing-dot'
+          }
+        });          
         
         map.current.on("mouseover", "poi-layer", (e) => {
           map.current.getCanvas().style.cursor = 'pointer';
